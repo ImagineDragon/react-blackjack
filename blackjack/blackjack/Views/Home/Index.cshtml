@@ -1,0 +1,43 @@
+﻿@model IEnumerable<blackjack.Models.User>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Email)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Password)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Bet)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in ViewBag.Users) {
+    <tr>
+        <td>
+            @item.Name
+        </td>
+        <td>
+            @item.Email
+        </td>
+        <td>
+            @item.Password
+        </td>
+        <td>
+            @item.Bet
+        </td>
+    </tr>
+}
+
+</table>
