@@ -1,0 +1,26 @@
+.Dib{
+    display: inline;
+	float: left;
+	margin-right: 10px;
+	width: 75px;
+	height: 75px;
+	line-height: 75px;
+	border-radius: 50%;	
+	font-size: 1.1em;
+	font-weight: 600;
+	cursor: pointer;
+	color: black;
+}
+
+.red{
+    background: url(../../../images/fishka1.png) no-repeat center;
+    background-size: 100% 100%;
+}
+.blue{
+    background: url(../../../images/fishkablue.png) no-repeat center;
+    background-size: 100% 100%;
+}
+.yellow{
+    background: url(../../../images/fishkayellow.png) no-repeat center;
+    background-size: 100% 100%;
+}

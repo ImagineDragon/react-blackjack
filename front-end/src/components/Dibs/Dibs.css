@@ -1,0 +1,10 @@
+.Dibs{
+	position: absolute;	
+	list-style-type: none;
+	padding: 5px;
+	margin: 0;
+	bottom: 30px;
+    left: 10px;
+    text-align: center;
+}
+

@@ -1,0 +1,58 @@
+.Rate{
+    position: absolute;
+    left: 20px;
+    top: 100px;
+	background-color: #E9C85F;
+	padding: 5px;
+	width: 250px;
+	height: 150px;
+	border-radius: 5px;
+	font-size: 1.35em;
+	font-weight: 700;
+	color: black;
+}
+.Rate>p{
+    margin: 0;
+    text-align: center;
+}
+
+.bet{
+	width: 100%;
+	margin: 10px 0;
+}
+.bet>label{
+	float: left;
+}
+.bet>p{
+	background-color: black;
+	color: white;
+	border: 1px solid #fff;
+	border-radius: 5px;
+	float: right;
+	width: 65%;
+    height: 25px;
+    margin: 0;
+    text-align: center;
+    line-height: 25px;
+}
+
+.cash{
+	width: 100%;
+	margin: 45px 0 0 0;
+}
+.cash>label{
+	margin-top: 5px;
+	float: left;
+}
+.cash>p{
+	background-color: black;
+	color: white;
+	border: 1px solid #fff;
+	border-radius: 5px;
+	float: right;
+	width: 65%;
+	height: 25px;
+    margin-top: 5px;
+    text-align: center;
+    line-height: 25px;
+}
