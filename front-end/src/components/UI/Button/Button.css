@@ -36,3 +36,7 @@
 	background: #2884f6;
 	color: #fff;
 }
+
+.notReady{
+    background: rgba(253, 106, 2, 1);
+}

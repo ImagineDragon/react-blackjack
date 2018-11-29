@@ -6,7 +6,6 @@ import {NavLink, Redirect} from 'react-router-dom'
 import is from 'is_js'
 import axios from 'axios';
 
-
 class Auth extends Component{
 	
 	state = {
@@ -37,6 +36,15 @@ class Auth extends Component{
 					minLength: 6
 				}
 			}
+		}
+	}
+
+	componentDidMount(){
+		const userId = localStorage.getItem('userId');
+		if(userId != null){
+			this.setState({
+				isLogin: true
+			});
 		}
 	}
 
@@ -136,11 +144,11 @@ class Auth extends Component{
 						<form onSubmit={this.submitHandler} className={classes.AuthForm}>
 							{this.renderInputs()}
 							<hr />
-							<Button 
+							<span id="LogIn"><Button 
 								type="success" 
 								onClick={this.loginHandler}
 								disabled={!this.state.isFormValid}
-							>Войти</Button>
+							>Войти</Button></span>
 							<NavLink to='/registration'>
 								<Button 
 									type="primary" 								

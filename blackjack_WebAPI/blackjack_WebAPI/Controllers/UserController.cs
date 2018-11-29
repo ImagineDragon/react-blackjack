@@ -79,7 +79,7 @@ namespace blackjack_WebAPI.Controllers
                 return null;
             }
 
-            ProfilePost profile = new ProfilePost { name = user.Name, email = user.Email, bet = user.Bet };
+            ProfilePost profile = new ProfilePost { Id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
 
             return profile;
         }
@@ -94,7 +94,7 @@ namespace blackjack_WebAPI.Controllers
                 return null;
             }
 
-            ProfilePost profile = new ProfilePost { name = user.Name, email = user.Email, bet = user.Bet };
+            ProfilePost profile = new ProfilePost { Id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
 
             return profile;
         }

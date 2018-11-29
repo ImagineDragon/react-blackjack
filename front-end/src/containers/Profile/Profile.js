@@ -4,25 +4,138 @@ import {NavLink, Redirect} from 'react-router-dom'
 import Button from '../../components/UI/Button/Button'
 import axios from 'axios';
 
+//import $ from 'jquery';
+import StartConnection, {connection, playHubProxy} from '../../Hubs/Hubs'
+//import { hubConnection } from 'signalr-no-jquery';
+
+var renderOutput = [];
+
+var setCount = 0;
+
 class Profile extends Component{
     state = {
         isLogout: false,
         bet: '',
         name: '',
-        email: ''
+        email: '',
+        count: 0,
+        ready: false
+    }
+
+    UsersList = (props) =>{
+        renderOutput = [];
+        for( var i = 0; i < props.length; i++ ){
+            if(props[i].id === localStorage.getItem('userId')){
+                renderOutput.push(<b key = {props[i].id} > {props[i].name} </b>);
+            } else {
+                console.log(props[i].ready);
+                renderOutput.push(
+                    <div key = {props[i].id} > 
+                        {props[i].name} 
+                        {props[i].ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                    </div>);
+            }
+        }
+    }
+    NewUser = (props) =>{
+        console.log(props.ready);
+        renderOutput.push(
+            <div key = {props.id} > 
+                {props.name} 
+                {props.ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+            </div>);
+    }
+    UserDisconnect = (props) =>{
+        for( var i = 0; i < renderOutput.length; i++){ 
+            if ( renderOutput[i].key === props.id ) {
+                renderOutput.splice(i, 1); 
+            }
+        }
+    }
+    UserReady = (props) =>{
+        console.log(props.ready);
+        for( var i = 0; i < renderOutput.length; i++){ 
+            if ( renderOutput[i].key === props.id ) {
+                renderOutput[i] = 
+                    <div key = {props.id} > 
+                        {props.name} 
+                        {props.ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                    </div>; 
+            }
+        }
     }
 
     isLogout = () => {
         localStorage.removeItem('userId');
+        localStorage.removeItem('enemyId');
         this.setState({
             isLogout: true
-        });
+        });        
+        console.log('Disconnected');
+        connection.stop();
     }
 
     componentDidMount(){
         const userId = localStorage.getItem('userId');
         this.getDataUser(userId);
 
+        function sss(){
+            this.setState({
+                count: setCount
+            });
+        };
+        sss = sss.bind(this);
+
+        playHubProxy.on('onConnected', function(profiles){
+            console.log('Connected')
+            this.UsersList(profiles);
+            setCount = profiles.length;
+            sss();
+        }.bind(this));
+
+        playHubProxy.on('onNewUserConnected', function(newUser){
+            console.log('New user')
+            setCount++;
+            this.NewUser(newUser);
+            sss();
+        }.bind(this));
+        playHubProxy.on('onUserDisconnected', function(profile){
+            if(connection != null){
+                console.log('User disconnected')
+                setCount--;
+                this.UserDisconnect(profile);
+                sss();
+            }
+        }.bind(this));
+        if(connection.state === 4){
+            /*connection.start().done(function(){
+                playHubProxy.invoke('connect', userId);
+                console.log(userId);
+            });*/
+            StartConnection(userId);
+        } else {
+            sss();
+        }
+
+        playHubProxy.on('onUserReady', function(profile){
+            console.log('user ready');
+            this.UserReady(profile);
+            sss()
+        }.bind(this));
+
+        playHubProxy.on('onGameAccept', function(profile){
+            console.log('enemy');
+            console.log(profile);
+            localStorage.setItem('enemyId', profile.id);
+            this.props.history.push('/play');
+        }.bind(this));
+    }
+
+    componentWillUnmount(){
+        playHubProxy.off('onConnected');
+        playHubProxy.off('onNewUserConnected');
+        playHubProxy.off('onUserDisconnected');
+        playHubProxy.off('onUserReady');
     }
 
     getDataUser = async (userId)=>{
@@ -40,6 +153,19 @@ class Profile extends Component{
         } else this.setState({isLogout: true});
     }
 
+    acceptGame = (e) => {
+        localStorage.setItem("enemyId", e.target.id);
+        console.log(e.currentTarget.id);
+        console.log("Accept enemy");
+        playHubProxy.invoke("acceptGame", localStorage.getItem('userId'), localStorage.getItem("enemyId"));
+    }
+
+    readyState = () => {
+        this.setState({
+            ready: !this.state.ready
+        });
+        playHubProxy.invoke("ready", localStorage.getItem('userId'));
+    }
 
     render(){
         if(this.state.isLogout){
@@ -56,17 +182,22 @@ class Profile extends Component{
                         </p>
                         <hr />
                         <div className={classes.Buttons}>
-                            <NavLink to="/play">
-                                <Button 
-                                    type="success" 
-                                >Играть</Button>
-                            </NavLink>                        
-                            <Button 
+                            <span onClick={this.readyState}>
+                                <Button type={this.state.ready ? "notReady" : "success"} >{this.state.ready ? "Не готов" : "Готов"}</Button>
+                            </span>
+                            <span id="disconnect"><Button
                                 type="error"
                                 onClick={this.isLogout} 
-                            >Выход</Button>
-                        </div>                    
-                    </div>               
+                            >Выход</Button></span>  
+                        </div>
+                        <hr />
+                        <div>
+                            Users online: {this.state.count}
+                            <div>                                
+                                {renderOutput}
+                            </div>
+                        </div>                         
+                    </div>
                 </div>
             )   
         }

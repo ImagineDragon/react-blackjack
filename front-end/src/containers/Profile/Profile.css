@@ -7,7 +7,8 @@
     height: 100%;
     justify-content: center;
 	padding-top: 20px;
-	flex-grow: 1;
+    flex-grow: 1;
+    color: white;
 }
 
 .Profile > div{
@@ -27,4 +28,35 @@
 
 .Buttons{
     text-align: center;
+}
+
+.popup {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    background-color: rgba(0,0,0, 0.5);
+  }
+.popup_inner {
+    position: absolute;
+    left: 25%;
+    right: 25%;
+    top: 25%;
+    bottom: 25%;
+    margin: auto;
+    background: white;
+}
+
+.popup_inner h1 {
+    color: black;
+}
+
+.popup_inner button {
+    position: absolute;
+    margin: auto;
+    bottom: 10%;
 }

@@ -27,6 +27,7 @@ namespace blackjack_WebAPI.Models
 
     public class ProfilePost
     {
+        public string Id { get; set; }
         public string name { get; set; }
         public string email { get; set; }
         public int bet { get; set; }
@@ -43,5 +44,15 @@ namespace blackjack_WebAPI.Models
     {
         public string userUpdate { get; set; }
         public int cash { get; set; }
+    }
+
+    public class HubProfile
+    {
+        public string connectionId {get;set;}
+        public string id { get; set; }
+        public string name { get; set; }
+        public string email { get; set; }
+        public int bet { get; set; }
+        public bool ready { get; set; }
     }
 }

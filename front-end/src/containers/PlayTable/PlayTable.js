@@ -14,6 +14,8 @@ import {fetchMakeBet,
         onMoreHandler,
         getDataUser} from '../../store/actions/playTable'
 
+import StartConnection, {connection, playHubProxy} from '../../Hubs/Hubs'
+
 class PlayTable extends Component {
     state = {
         isLogout: false
@@ -24,6 +26,8 @@ class PlayTable extends Component {
         this.setState({
             isLogout: true
         });
+        connection.stop();
+        console.log('stop');
     }
     
    onCreateDibHandler = value =>{
@@ -71,7 +75,7 @@ class PlayTable extends Component {
             });
         }
         this.props.getDataUser(userId);
-
+        console.log(localStorage.getItem("enemyId"));
     }
 
         
