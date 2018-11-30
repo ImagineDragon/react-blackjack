@@ -28,17 +28,15 @@ class Profile extends Component{
             if(props[i].id === localStorage.getItem('userId')){
                 renderOutput.push(<b key = {props[i].id} > {props[i].name} </b>);
             } else {
-                console.log(props[i].ready);
                 renderOutput.push(
                     <div key = {props[i].id} > 
                         {props[i].name} 
-                        {props[i].ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                        {props[i].ready ? <button id={props[i].id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
                     </div>);
             }
         }
     }
     NewUser = (props) =>{
-        console.log(props.ready);
         renderOutput.push(
             <div key = {props.id} > 
                 {props.name} 
@@ -53,7 +51,6 @@ class Profile extends Component{
         }
     }
     UserReady = (props) =>{
-        console.log(props.ready);
         for( var i = 0; i < renderOutput.length; i++){ 
             if ( renderOutput[i].key === props.id ) {
                 renderOutput[i] = 
@@ -88,6 +85,7 @@ class Profile extends Component{
 
         playHubProxy.on('onConnected', function(profiles){
             console.log('Connected')
+            console.log(profiles);
             this.UsersList(profiles);
             setCount = profiles.length;
             sss();
@@ -118,15 +116,14 @@ class Profile extends Component{
         }
 
         playHubProxy.on('onUserReady', function(profile){
-            console.log('user ready');
             this.UserReady(profile);
             sss()
         }.bind(this));
 
         playHubProxy.on('onGameAccept', function(profile){
-            console.log('enemy');
-            console.log(profile);
             localStorage.setItem('enemyId', profile.id);
+            this.readyState();
+            connection.stop();
             this.props.history.push('/play');
         }.bind(this));
     }
@@ -136,6 +133,7 @@ class Profile extends Component{
         playHubProxy.off('onNewUserConnected');
         playHubProxy.off('onUserDisconnected');
         playHubProxy.off('onUserReady');
+        playHubProxy.off('onGameAccept');
     }
 
     getDataUser = async (userId)=>{
@@ -155,9 +153,12 @@ class Profile extends Component{
 
     acceptGame = (e) => {
         localStorage.setItem("enemyId", e.target.id);
-        console.log(e.currentTarget.id);
-        console.log("Accept enemy");
+        if(this.state.ready){
+            this.readyState();
+        }
         playHubProxy.invoke("acceptGame", localStorage.getItem('userId'), localStorage.getItem("enemyId"));
+        connection.stop();
+        this.props.history.push('/play');
     }
 
     readyState = () => {

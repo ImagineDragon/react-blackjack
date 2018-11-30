@@ -52,6 +52,7 @@ namespace blackjack_WebAPI.Models
         public string id { get; set; }
         public string name { get; set; }
         public string email { get; set; }
+        public int cash { get; set; }
         public int bet { get; set; }
         public bool ready { get; set; }
     }

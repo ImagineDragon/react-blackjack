@@ -4,6 +4,7 @@ import {NavLink, Redirect} from 'react-router-dom'
 import classes from './PlayTable.css'
 import Dibs from '../../components/Dibs/DIbs'
 import Rate from '../../components/Rate/Rate'
+import Enemy from '../../components/Enemy/Enemy'
 import PlayButton from '../../components/UI/PlayButton/PlayButton'
 import Button from '../../components/UI/Button/Button'
 import DealerHand from '../../components/DealerHand/DealerHand'
@@ -14,11 +15,17 @@ import {fetchMakeBet,
         onMoreHandler,
         getDataUser} from '../../store/actions/playTable'
 
-import StartConnection, {connection, playHubProxy} from '../../Hubs/Hubs'
+import {connection, playHubProxy} from '../../Hubs/Hubs'
+
+const userId = localStorage.getItem('userId');
+const enemyId = localStorage.getItem('enemyId');
 
 class PlayTable extends Component {
     state = {
-        isLogout: false
+        isLogout: false,
+        enemyName: '',
+        enemyBet: 0,
+        enemyCash: 0
     }
 
     isLogout = () => {
@@ -64,7 +71,6 @@ class PlayTable extends Component {
     }
 
     componentDidMount(){
-        const userId = localStorage.getItem('userId');
         if(userId == null){
             this.setState({
             isLogout: true
@@ -75,7 +81,35 @@ class PlayTable extends Component {
             });
         }
         this.props.getDataUser(userId);
-        console.log(localStorage.getItem("enemyId"));
+        console.log('enemyId = ', + enemyId);
+        
+        playHubProxy.on('onGameStart', function(enemy){
+            console.log(enemy);
+            this.setState({
+                enemyName: enemy.name,
+                enemyCash: enemy.cash,
+                enemyBet: enemy.bet
+            });
+        }.bind(this));
+
+        playHubProxy.on('onEnemyBet', function(enemy){
+            console.log(enemy);
+            this.setState({
+                enemyCash: enemy.cash,
+                enemyBet: enemy.bet
+            });
+        }.bind(this));
+
+        connection.start().done(function(){
+            console.log('start game');
+            playHubProxy.invoke('gameStart', userId, enemyId);
+        }.bind(this));
+    }
+
+    componentWillUnmount(){
+        playHubProxy.off('onGameStart');
+        playHubProxy.off('onEnemyBet');
+        connection.stop();
     }
 
         
@@ -89,6 +123,11 @@ class PlayTable extends Component {
                     bet={this.props.bet}
                     cash={this.props.cash}
                     name={this.props.nameUser}
+                />
+                <Enemy 
+                    bet={this.state.enemyBet}
+                    cash={this.state.enemyCash}
+                    name={this.state.enemyName}
                 />
                 <DealerHand 
                     dealerHand={this.props.dealerHand}
@@ -128,6 +167,9 @@ class PlayTable extends Component {
 }
 
 function mapStateToProps(state){
+    if(connection.state === 1){
+        playHubProxy.invoke('userBet', state.playTable.cash, state.playTable.bet, enemyId);
+    }
     return{
         deck: state.playTable.deck,
         dibs:state.playTable.dibs,
