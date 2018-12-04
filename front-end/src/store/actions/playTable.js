@@ -345,7 +345,7 @@ async function updateData(cash){
     const dataUpdate ={
         userUpdate, cash
     }
-    await axios.put('http://localhost:3001/playUser', dataUpdate);
+    //await axios.put('http://localhost:3001/playUser', dataUpdate);
     // if(respons.data){
     //     const setStateUser = {
     //         cash: respons.data.bet,

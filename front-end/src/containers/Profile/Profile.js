@@ -26,12 +26,12 @@ class Profile extends Component{
         renderOutput = [];
         for( var i = 0; i < props.length; i++ ){
             if(props[i].id === localStorage.getItem('userId')){
-                renderOutput.push(<b key = {props[i].id} > {props[i].name} </b>);
+                renderOutput.push(<div key = {props[i].id} > <b>{props[i].name}</b> </div>);
             } else {
                 renderOutput.push(
                     <div key = {props[i].id} > 
                         {props[i].name} 
-                        {props[i].ready ? <button id={props[i].id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                        {props[i].ready ? <Button type='success' id={props[i].id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
                     </div>);
             }
         }
@@ -40,7 +40,7 @@ class Profile extends Component{
         renderOutput.push(
             <div key = {props.id} > 
                 {props.name} 
-                {props.ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                {props.ready ? <Button type='success' id={props.id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
             </div>);
     }
     UserDisconnect = (props) =>{
@@ -56,7 +56,7 @@ class Profile extends Component{
                 renderOutput[i] = 
                     <div key = {props.id} > 
                         {props.name} 
-                        {props.ready ? <button id={props.id} onClick={this.acceptGame.bind(this)}>Играть</button> : null}
+                        {props.ready ? <Button type='success' id={props.id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
                     </div>; 
             }
         }
@@ -73,6 +73,7 @@ class Profile extends Component{
     }
 
     componentDidMount(){
+        localStorage.setItem('enemyId', -1);
         const userId = localStorage.getItem('userId');
         this.getDataUser(userId);
 
@@ -85,7 +86,6 @@ class Profile extends Component{
 
         playHubProxy.on('onConnected', function(profiles){
             console.log('Connected')
-            console.log(profiles);
             this.UsersList(profiles);
             setCount = profiles.length;
             sss();
@@ -106,10 +106,6 @@ class Profile extends Component{
             }
         }.bind(this));
         if(connection.state === 4){
-            /*connection.start().done(function(){
-                playHubProxy.invoke('connect', userId);
-                console.log(userId);
-            });*/
             StartConnection(userId);
         } else {
             sss();
@@ -123,7 +119,7 @@ class Profile extends Component{
         playHubProxy.on('onGameAccept', function(profile){
             localStorage.setItem('enemyId', profile.id);
             this.readyState();
-            connection.stop();
+            //connection.stop();
             this.props.history.push('/play');
         }.bind(this));
     }
@@ -157,15 +153,22 @@ class Profile extends Component{
             this.readyState();
         }
         playHubProxy.invoke("acceptGame", localStorage.getItem('userId'), localStorage.getItem("enemyId"));
-        connection.stop();
+        //connection.stop();
+        this.props.history.push('/play');
+    }
+
+    playWithBot = () => {
+        if(this.state.ready){
+            this.readyState();
+        }
         this.props.history.push('/play');
     }
 
     readyState = () => {
+        playHubProxy.invoke("ready", localStorage.getItem('userId'), !this.state.ready);
         this.setState({
             ready: !this.state.ready
         });
-        playHubProxy.invoke("ready", localStorage.getItem('userId'));
     }
 
     render(){
@@ -183,18 +186,23 @@ class Profile extends Component{
                         </p>
                         <hr />
                         <div className={classes.Buttons}>
-                            <span onClick={this.readyState}>
-                                <Button type={this.state.ready ? "notReady" : "success"} >{this.state.ready ? "Не готов" : "Готов"}</Button>
-                            </span>
-                            <span id="disconnect"><Button
+                            <Button
+                                type="success" 
+                                onClick={this.playWithBot} 
+                            >Играть с ботом</Button>
+                            <Button 
+                                type={this.state.ready ? "notReady" : "success"} 
+                                onClick={this.readyState} 
+                            >{this.state.ready ? "Не готов" : "Готов"}</Button>
+                            <Button
                                 type="error"
                                 onClick={this.isLogout} 
-                            >Выход</Button></span>  
+                            >Выход</Button>
                         </div>
                         <hr />
                         <div>
                             Users online: {this.state.count}
-                            <div>                                
+                            <div className={classes.UsersList}>                                
                                 {renderOutput}
                             </div>
                         </div>                         

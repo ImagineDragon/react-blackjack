@@ -42,18 +42,33 @@ namespace blackjack_WebAPI.Hubs
             }
         }
 
-        public void Ready(string userId)
+        public void Ready(string userId, bool ready)
         {
             int index = Profiles.FindIndex(u => u.id.ToString() == userId);
-            Profiles[index].ready = !Profiles[index].ready;
+            Profiles[index].ready = ready;
 
             Clients.AllExcept(Profiles[index].connectionId).onUserReady(Profiles[index]);
         }
 
         public void AcceptGame(string userId, string enemyId)
         {
-            HubProfile user = Profiles.FirstOrDefault(u => u.id.ToString() == userId);
-            HubProfile enemy = Profiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+            HubProfile user = PlayProfiles.FirstOrDefault(u => u.id.ToString() == userId);
+            if(user != null)
+            {
+                PlayProfiles.Remove(user);
+            }
+
+            HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+            if(enemy != null)
+            {
+                PlayProfiles.Remove(enemy);
+            }
+
+            HubProfile user1 = Profiles.FirstOrDefault(u => u.id.ToString() == userId);
+            HubProfile enemy1 = Profiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+
+            user = new HubProfile() { id = user1.id, name = user1.name, email = user1.email, bet = user1.bet, cash = user1.cash, connectionId = user1.connectionId, ready = user1.ready };
+            enemy = new HubProfile() { id = enemy1.id, name = enemy1.name, email = enemy1.email, bet = enemy1.bet, cash = enemy1.cash, connectionId = enemy1.connectionId, ready = enemy1.ready };
 
             PlayProfiles.Add(user);
             PlayProfiles.Add(enemy);
@@ -66,33 +81,51 @@ namespace blackjack_WebAPI.Hubs
             int index = PlayProfiles.FindIndex(u => u.id.ToString() == userId);
             PlayProfiles[index].connectionId = Context.ConnectionId;
 
+            HubProfile user = PlayProfiles[index];
             HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
 
-            Clients.Caller.onGameStart(enemy);
+            Clients.Caller.onGameStart(user, enemy);
         }
 
         public void UserBet(int cash, int bet, string enemyId)
         {
             int index = PlayProfiles.FindIndex(u => u.connectionId.ToString() == Context.ConnectionId);
+            Profiles.FirstOrDefault();
             PlayProfiles[index].cash = cash;
             PlayProfiles[index].bet = bet;
 
-            HubProfile user = PlayProfiles.FirstOrDefault(u => u.connectionId.ToString() == Context.ConnectionId);
+            HubProfile user = PlayProfiles[index];
             HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
 
+            Clients.Caller.onBet(user);
+
             Clients.Client(enemy.connectionId).onEnemyBet(user);
+        }
+
+        public void StopGame(string userId, string enemyId)
+        {
+            PlayProfiles.Remove(PlayProfiles.FirstOrDefault(x => x.id == userId));
+
+            HubProfile enemy = PlayProfiles.FirstOrDefault(x => x.id == enemyId);
+            if(enemy != null) Clients.Client(enemy.connectionId).onStopGame();
         }
 
         public override Task OnDisconnected(bool stopCalled)
         {
 
-            System.Threading.Thread.Sleep(1000);
+            System.Threading.Thread.Sleep(500);
 
+            var playProfile = PlayProfiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             var profile = Profiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             if (profile != null)
             {
                 Profiles.Remove(profile);
                 Clients.All.onUserDisconnected(profile);
+            }
+
+            if (playProfile != null)
+            {
+                PlayProfiles.Remove(profile);
             }
 
             return base.OnDisconnected(stopCalled);

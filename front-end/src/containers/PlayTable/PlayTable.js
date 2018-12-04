@@ -17,12 +17,14 @@ import {fetchMakeBet,
 
 import {connection, playHubProxy} from '../../Hubs/Hubs'
 
-const userId = localStorage.getItem('userId');
-const enemyId = localStorage.getItem('enemyId');
+var userId;
+var enemyId;
 
 class PlayTable extends Component {
     state = {
         isLogout: false,
+        bet: 0,
+        cash: 0,
         enemyName: '',
         enemyBet: 0,
         enemyCash: 0
@@ -37,7 +39,7 @@ class PlayTable extends Component {
         console.log('stop');
     }
     
-   onCreateDibHandler = value =>{
+   onCreateDibHandler = value =>{   
         let div = document.createElement('div');
         switch(value){
             case '1':
@@ -59,18 +61,51 @@ class PlayTable extends Component {
                 div.className = classes.dib_200
         }        
         div.innerHTML = value;
-        let bet = parseInt(this.props.bet) + parseInt(value);
-        let cash = parseInt(this.props.cash) - parseInt(value);
+        let bet = 0;
+        let cash;
+        if(localStorage.getItem('enemyId') != -1){
+            bet = (this.state.bet) + parseInt(value);
+            cash = (this.state.cash) - parseInt(value);
+            console.log('userBet');
+            playHubProxy.invoke('userBet', cash, bet, localStorage.getItem('enemyId'));
+        } else {
+            if(localStorage.getItem('bet') != null){
+                bet = parseInt(localStorage.getItem('bet')) + parseInt(value);
+                cash = parseInt(localStorage.getItem('cash')) - parseInt(value);
+            } else{
+                bet += parseInt(value);
+                cash = (parseInt(this.props.cash)) - parseInt(value);
+            }
+            localStorage.setItem('bet', bet);
+            localStorage.setItem('cash', cash);
+            this.setState({
+                bet: bet,
+                cash: cash
+            });
+        }
+        console.log('state bet ' + this.state.bet);
+        console.log('props cash ' + this.props.cash);
+        console.log('props bet ' + this.props.bet);
+        console.log('bet ' + bet);
         if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0){
             let isPlay = true;
             this.props.fetchMakeBet(bet, cash, isPlay);
             document.getElementById('dibsBet').appendChild(div);
+            localStorage.setItem('dibsBet', document.getElementById('dibsBet').innerHTML);
         }
-        
-                
     }
 
     componentDidMount(){
+        userId = localStorage.getItem('userId');
+        enemyId = localStorage.getItem('enemyId');
+        
+        if(localStorage.getItem('dibsBet') != null){
+            console.log(localStorage.getItem('dibsBet'));
+            document.getElementById('dibsBet').innerHTML = (localStorage.getItem('dibsBet'));
+        }
+
+        console.log('user = ' + userId + ' enemy = ' + enemyId);
+
         if(userId == null){
             this.setState({
             isLogout: true
@@ -81,11 +116,18 @@ class PlayTable extends Component {
             });
         }
         this.props.getDataUser(userId);
-        console.log('enemyId = ', + enemyId);
-        
-        playHubProxy.on('onGameStart', function(enemy){
-            console.log(enemy);
+
+        if(localStorage.getItem('bet') != null){
             this.setState({
+                bet: localStorage.getItem('bet'),
+                cash: localStorage.getItem('cash')
+            });
+        }
+
+        playHubProxy.on('onGameStart', function(user, enemy){
+            this.setState({
+                cash: user.cash,
+                bet: user.bet,
                 enemyName: enemy.name,
                 enemyCash: enemy.cash,
                 enemyBet: enemy.bet
@@ -93,22 +135,48 @@ class PlayTable extends Component {
         }.bind(this));
 
         playHubProxy.on('onEnemyBet', function(enemy){
-            console.log(enemy);
             this.setState({
                 enemyCash: enemy.cash,
                 enemyBet: enemy.bet
             });
         }.bind(this));
 
-        connection.start().done(function(){
-            console.log('start game');
-            playHubProxy.invoke('gameStart', userId, enemyId);
+        playHubProxy.on('onBet', function(user){                    
+            this.setState({                    
+                cash: user.cash,
+                bet: user.bet
+            });
         }.bind(this));
+
+        playHubProxy.on('onStopGame', function(){
+            this.props.history.push('/profile');
+        }.bind(this));
+
+        if(enemyId != -1){
+            connection.start().done(function(){
+                console.log('start game');
+                playHubProxy.invoke('gameStart', userId, enemyId);
+            }.bind(this));
+        }
     }
 
     componentWillUnmount(){
+        this.setState({
+            bet: 0,
+            cash: 0,
+            enemyName: '',
+            enemyBet: 0,
+            enemyCash: 0
+        });
+        localStorage.removeItem('bet');
+        localStorage.removeItem('dibsBet');
+        if(enemyId != -1){
+            playHubProxy.invoke('stopGame', userId, enemyId);
+        }
         playHubProxy.off('onGameStart');
         playHubProxy.off('onEnemyBet');
+        playHubProxy.off('onBet');
+        playHubProxy.off('onStopGame');
         connection.stop();
     }
 
@@ -118,17 +186,19 @@ class PlayTable extends Component {
             return (<Redirect to='/' />)
         }
         return(
-            <div className={classes.PlayTable}>
-                <Rate 
-                    bet={this.props.bet}
-                    cash={this.props.cash}
+            <div className={classes.PlayTable}>                
+                <Rate
+                    bet={this.state.bet}
+                    cash={this.state.cash == 0 ? this.props.cash : this.state.cash}
                     name={this.props.nameUser}
-                />
-                <Enemy 
-                    bet={this.state.enemyBet}
-                    cash={this.state.enemyCash}
-                    name={this.state.enemyName}
-                />
+                />                
+                {enemyId != -1 ?
+                    <Enemy 
+                        bet={this.state.enemyBet}
+                        cash={this.state.enemyCash}
+                        name={this.state.enemyName}
+                    /> : null
+                }
                 <DealerHand 
                     dealerHand={this.props.dealerHand}
                     dealerHandSum={this.props.dealerHandSum}
@@ -167,9 +237,6 @@ class PlayTable extends Component {
 }
 
 function mapStateToProps(state){
-    if(connection.state === 1){
-        playHubProxy.invoke('userBet', state.playTable.cash, state.playTable.bet, enemyId);
-    }
     return{
         deck: state.playTable.deck,
         dibs:state.playTable.dibs,
