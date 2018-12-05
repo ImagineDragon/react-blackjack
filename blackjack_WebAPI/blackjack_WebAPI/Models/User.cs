@@ -56,4 +56,10 @@ namespace blackjack_WebAPI.Models
         public int bet { get; set; }
         public bool ready { get; set; }
     }
+
+    public class Messages
+    {
+        public string userName { get; set; }
+        public string message { get; set; }
+    }
 }

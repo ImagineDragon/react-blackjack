@@ -87,6 +87,14 @@ namespace blackjack_WebAPI.Hubs
             Clients.Caller.onGameStart(user, enemy);
         }
 
+        public void GameChat(string userName, string message, string enemyId)
+        {
+            HubProfile enemy = PlayProfiles.FirstOrDefault(x => x.id == enemyId);
+            Messages mes = new Messages{ userName = userName, message = message };
+
+            Clients.Client(enemy.connectionId).onMessage(mes);
+        }
+
         public void UserBet(int cash, int bet, string enemyId)
         {
             int index = PlayProfiles.FindIndex(u => u.connectionId.ToString() == Context.ConnectionId);

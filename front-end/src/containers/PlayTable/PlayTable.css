@@ -7,7 +7,15 @@
     height: 100%;
     justify-content: center;
 	padding-top: 20px;
-	flex-grow: 1;
+    flex-grow: 1;
+    min-width: 700px;
+    min-height: 450px;
+}
+
+.Container{
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
 }
 
 .dib_1{

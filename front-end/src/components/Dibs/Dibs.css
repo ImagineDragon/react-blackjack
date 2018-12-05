@@ -1,10 +1,11 @@
 .Dibs{
 	position: absolute;	
 	list-style-type: none;
-	padding: 5px;
+	padding: 0;
 	margin: 0;
 	bottom: 30px;
     left: 10px;
-    text-align: center;
+	text-align: center;
+	max-width: 40%;
 }
 

@@ -1,0 +1,52 @@
+.Chat{
+    position: absolute;
+    right: 10px;
+    bottom: 55px;
+    animation-duration: 1s;
+}
+
+.Message{
+    height: 100%;
+    overflow: auto;
+    word-break: break-all;
+}
+
+.Message p{
+    color: black;
+    margin: 0 5px;
+}
+
+.Chat input{
+    border: 0;
+    position: absolute;
+    bottom: -25px;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(150, 150, 150, 0.5);
+}
+
+.Chat ::placeholder{
+    color: rgb(162, 165, 165);
+}
+
+.Chat input:focus{
+    background-color: azure;
+}
+
+.showChat{
+    width: 40%;
+    height: 200px;
+    background-color: rgba(150, 150, 150, 0.8);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.hideChat{
+    width: 300px;
+    max-width: 40%;
+    height: 100px;
+    background-color: rgba(150, 150, 150, 0.5);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}

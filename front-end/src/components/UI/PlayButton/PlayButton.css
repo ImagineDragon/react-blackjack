@@ -1,7 +1,10 @@
 .PlayButton{
     position: absolute;
-    bottom: 50px;
-    /* left: 575px; */
+    bottom: 30px;
+    width: 90px;
+    max-width: 20%;
+    left: 50%;
+    margin-left: -45px;
 }
 
 .btn{
@@ -9,10 +12,11 @@
 	background-color: #E9C85F;
 	border: none;
     color: #000; 
-    margin-right: 10px;
     border-radius: 5px;
     padding: 10px;
     font-weight: bold;
+    width: 90px;
+    margin-bottom: 2px;
 }
 	.btn:hover{
 		background-color: #000;

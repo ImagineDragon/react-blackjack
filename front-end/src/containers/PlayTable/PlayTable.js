@@ -15,6 +15,7 @@ import {fetchMakeBet,
         onMoreHandler,
         getDataUser} from '../../store/actions/playTable'
 
+import Chat, {scrollDown} from '../../components/UI/Chat/Chat'
 import {connection, playHubProxy} from '../../Hubs/Hubs'
 
 var userId;
@@ -27,7 +28,8 @@ class PlayTable extends Component {
         cash: 0,
         enemyName: '',
         enemyBet: 0,
-        enemyCash: 0
+        enemyCash: 0,
+        messages: []
     }
 
     isLogout = () => {
@@ -100,7 +102,6 @@ class PlayTable extends Component {
         enemyId = localStorage.getItem('enemyId');
         
         if(localStorage.getItem('dibsBet') != null){
-            console.log(localStorage.getItem('dibsBet'));
             document.getElementById('dibsBet').innerHTML = (localStorage.getItem('dibsBet'));
         }
 
@@ -152,6 +153,13 @@ class PlayTable extends Component {
             this.props.history.push('/profile');
         }.bind(this));
 
+        playHubProxy.on('onMessage', function(message){
+            this.setState({
+                messages: [...this.state.messages, message]
+            });
+            scrollDown();
+        }.bind(this));
+
         if(enemyId != -1){
             connection.start().done(function(){
                 console.log('start game');
@@ -177,16 +185,24 @@ class PlayTable extends Component {
         playHubProxy.off('onEnemyBet');
         playHubProxy.off('onBet');
         playHubProxy.off('onStopGame');
+        playHubProxy.off('onMessage');
         connection.stop();
     }
 
+    onSend = (value) =>{
+        this.setState({
+            messages: [...this.state.messages, {userName: this.props.nameUser, message: value}]
+        });
+        playHubProxy.invoke('gameChat', this.props.nameUser, value, enemyId);
+    }
         
     render(){
         if(this.state.isLogout){
             return (<Redirect to='/' />)
         }
         return(
-            <div className={classes.PlayTable}>                
+            <div className={classes.PlayTable}>
+            <div className={classes.Container}>
                 <Rate
                     bet={this.state.bet}
                     cash={this.state.cash == 0 ? this.props.cash : this.state.cash}
@@ -219,7 +235,12 @@ class PlayTable extends Component {
                     disabledPlay={!this.props.isPlay}
                     disabledEnough={!this.props.isEnough}
                     disabledMore={!this.props.isMore}
-                /> 
+                />
+                <Chat
+                    UserName={this.props.nameUser}
+                    Messages={this.state.messages}
+                    onSend={this.onSend}
+                />
                 <div className={classes.Button}>
                     <NavLink to="/profile">
                         <Button 
@@ -231,6 +252,7 @@ class PlayTable extends Component {
                         onClick={this.isLogout}
                     >Выход</Button>
                 </div>                   
+            </div>
             </div>
         )
     }
