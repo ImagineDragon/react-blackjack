@@ -69,7 +69,7 @@ class PlayTable extends Component {
             bet = (this.state.bet) + parseInt(value);
             cash = (this.state.cash) - parseInt(value);
             console.log('userBet');
-            playHubProxy.invoke('userBet', cash, bet, localStorage.getItem('enemyId'));
+            playHubProxy.invoke('userBet', cash, bet);
         } else {
             if(localStorage.getItem('bet') != null){
                 bet = parseInt(localStorage.getItem('bet')) + parseInt(value);
@@ -125,14 +125,16 @@ class PlayTable extends Component {
             });
         }
 
-        playHubProxy.on('onGameStart', function(user, enemy){
+        playHubProxy.on('onGameStart', function(user, enemy, messages){
             this.setState({
                 cash: user.cash,
                 bet: user.bet,
                 enemyName: enemy.name,
                 enemyCash: enemy.cash,
-                enemyBet: enemy.bet
+                enemyBet: enemy.bet,
+                messages: messages
             });
+            scrollDown();
         }.bind(this));
 
         playHubProxy.on('onEnemyBet', function(enemy){
@@ -163,7 +165,7 @@ class PlayTable extends Component {
         if(enemyId != -1){
             connection.start().done(function(){
                 console.log('start game');
-                playHubProxy.invoke('gameStart', userId, enemyId);
+                playHubProxy.invoke('gameStart', userId);
             }.bind(this));
         }
     }
@@ -178,9 +180,6 @@ class PlayTable extends Component {
         });
         localStorage.removeItem('bet');
         localStorage.removeItem('dibsBet');
-        if(enemyId != -1){
-            playHubProxy.invoke('stopGame', userId, enemyId);
-        }
         playHubProxy.off('onGameStart');
         playHubProxy.off('onEnemyBet');
         playHubProxy.off('onBet');
@@ -193,7 +192,13 @@ class PlayTable extends Component {
         this.setState({
             messages: [...this.state.messages, {userName: this.props.nameUser, message: value}]
         });
-        playHubProxy.invoke('gameChat', this.props.nameUser, value, enemyId);
+        playHubProxy.invoke('gameChat', userId, value);
+    }
+
+    endGame = () =>{
+        if(enemyId != -1){
+            playHubProxy.invoke('stopGame', userId);
+        }
     }
         
     render(){
@@ -236,15 +241,18 @@ class PlayTable extends Component {
                     disabledEnough={!this.props.isEnough}
                     disabledMore={!this.props.isMore}
                 />
-                <Chat
-                    UserName={this.props.nameUser}
-                    Messages={this.state.messages}
-                    onSend={this.onSend}
-                />
+                {enemyId != -1 ?
+                    <Chat
+                        UserName={this.props.nameUser}
+                        Messages={this.state.messages}
+                        onSend={this.onSend}
+                    />: null
+                }
                 <div className={classes.Button}>
                     <NavLink to="/profile">
                         <Button 
                             type="success" 
+                            onClick={this.endGame}
                         >Профиль</Button>
                     </NavLink>         
                     <Button 

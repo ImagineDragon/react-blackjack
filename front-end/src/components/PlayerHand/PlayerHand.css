@@ -1,8 +1,11 @@
 .PlayerHand{
     position: absolute;
-	bottom: 300px;
+	bottom: 100px;
 	height: 175px;
 	padding: 0;
+	left: 50%;
+	margin-right: -50%;
+	transform: translate(-50%, -50%)
 }
 
 .PlayerHand  p{

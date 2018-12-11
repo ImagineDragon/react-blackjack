@@ -15,7 +15,7 @@ namespace blackjack_WebAPI.Hubs
     {
         static List<HubProfile> Profiles = new List<HubProfile>();
 
-        static List<HubProfile> PlayProfiles = new List<HubProfile>();
+        static List<Game> PlayProfiles = new List<Game>();
 
         UserContext db = new UserContext();
 
@@ -52,78 +52,118 @@ namespace blackjack_WebAPI.Hubs
 
         public void AcceptGame(string userId, string enemyId)
         {
-            HubProfile user = PlayProfiles.FirstOrDefault(u => u.id.ToString() == userId);
-            if(user != null)
+            Game game = PlayProfiles.FirstOrDefault(u => u.user1.id.ToString() == userId);
+            if(game != null)
             {
-                PlayProfiles.Remove(user);
+                PlayProfiles.Remove(game);
             }
 
-            HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
-            if(enemy != null)
+            game = PlayProfiles.FirstOrDefault(u => u.user2.id.ToString() == enemyId);
+            if(game != null)
             {
-                PlayProfiles.Remove(enemy);
+                PlayProfiles.Remove(game);
             }
+            game = new Game();
+            HubProfile user = Profiles.FirstOrDefault(u => u.id.ToString() == userId);
+            HubProfile enemy = Profiles.FirstOrDefault(u => u.id.ToString() == enemyId);
 
-            HubProfile user1 = Profiles.FirstOrDefault(u => u.id.ToString() == userId);
-            HubProfile enemy1 = Profiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+            game.user1 = new HubProfile() { id = user.id, name = user.name, email = user.email, bet = user.bet, cash = user.cash, connectionId = user.connectionId, ready = user.ready };
+            game.user2 = new HubProfile() { id = enemy.id, name = enemy.name, email = enemy.email, bet = enemy.bet, cash = enemy.cash, connectionId = enemy.connectionId, ready = enemy.ready };
+            game.messages = new List<Message>();
 
-            user = new HubProfile() { id = user1.id, name = user1.name, email = user1.email, bet = user1.bet, cash = user1.cash, connectionId = user1.connectionId, ready = user1.ready };
-            enemy = new HubProfile() { id = enemy1.id, name = enemy1.name, email = enemy1.email, bet = enemy1.bet, cash = enemy1.cash, connectionId = enemy1.connectionId, ready = enemy1.ready };
-
-            PlayProfiles.Add(user);
-            PlayProfiles.Add(enemy);
+            PlayProfiles.Add(game);
 
             Clients.Client(enemy.connectionId).onGameAccept(user);
         }
 
-        public void GameStart(string userId, string enemyId)
+        public void GameStart(string userId)
         {
-            int index = PlayProfiles.FindIndex(u => u.id.ToString() == userId);
-            PlayProfiles[index].connectionId = Context.ConnectionId;
+            HubProfile user;
+            HubProfile enemy;
 
-            HubProfile user = PlayProfiles[index];
-            HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+            int index = PlayProfiles.FindIndex(u => u.user1.id.ToString() == userId || u.user2.id.ToString() == userId);
+            if(PlayProfiles[index].user1.id == userId)
+            {
+                PlayProfiles[index].user1.connectionId = Context.ConnectionId;
 
-            Clients.Caller.onGameStart(user, enemy);
+                user = PlayProfiles[index].user1;
+                enemy = PlayProfiles[index].user2;
+            } else
+            {
+                PlayProfiles[index].user2.connectionId = Context.ConnectionId;
+
+                user = PlayProfiles[index].user2;
+                enemy = PlayProfiles[index].user1;
+            }
+
+            Clients.Caller.onGameStart(user, enemy, PlayProfiles[index].messages);
         }
 
-        public void GameChat(string userName, string message, string enemyId)
+        public void GameChat(string userId, string message)
         {
-            HubProfile enemy = PlayProfiles.FirstOrDefault(x => x.id == enemyId);
-            Messages mes = new Messages{ userName = userName, message = message };
+            int index = PlayProfiles.FindIndex(x => x.user1.id == userId || x.user2.id == userId);
+            HubProfile enemy;
+            if(PlayProfiles[index].user1.id == userId)
+            {
+                enemy = PlayProfiles[index].user2;
+                PlayProfiles[index].messages.Add(new Message { userName = PlayProfiles[index].user1.name, message = message });
+            } else
+            {
+                enemy = PlayProfiles[index].user1;
+                PlayProfiles[index].messages.Add(new Message { userName = PlayProfiles[index].user2.name, message = message });
+            }
+
+            Message mes = PlayProfiles[index].messages[PlayProfiles[index].messages.Count() - 1];
 
             Clients.Client(enemy.connectionId).onMessage(mes);
         }
 
-        public void UserBet(int cash, int bet, string enemyId)
+        public void UserBet(int cash, int bet)
         {
-            int index = PlayProfiles.FindIndex(u => u.connectionId.ToString() == Context.ConnectionId);
-            Profiles.FirstOrDefault();
-            PlayProfiles[index].cash = cash;
-            PlayProfiles[index].bet = bet;
+            HubProfile user;
+            HubProfile enemy;
+            int index = PlayProfiles.FindIndex(u => u.user1.connectionId.ToString() == Context.ConnectionId || u.user2.connectionId.ToString() == Context.ConnectionId);
+            if(PlayProfiles[index].user1.connectionId == Context.ConnectionId)
+            {
+                PlayProfiles[index].user1.cash = cash;
+                PlayProfiles[index].user1.bet = bet;
 
-            HubProfile user = PlayProfiles[index];
-            HubProfile enemy = PlayProfiles.FirstOrDefault(u => u.id.ToString() == enemyId);
+                user = PlayProfiles[index].user1;
+                enemy = PlayProfiles[index].user2;
+            }
+            else
+            {
+                PlayProfiles[index].user2.cash = cash;
+                PlayProfiles[index].user2.bet = bet;
 
+                user = PlayProfiles[index].user2;
+                enemy = PlayProfiles[index].user1;
+            }
+            
             Clients.Caller.onBet(user);
 
             Clients.Client(enemy.connectionId).onEnemyBet(user);
         }
 
-        public void StopGame(string userId, string enemyId)
+        public void StopGame(string userId)
         {
-            PlayProfiles.Remove(PlayProfiles.FirstOrDefault(x => x.id == userId));
+            Game game = PlayProfiles.FirstOrDefault(x => x.user1.id == userId || x.user2.id == userId);
+            if (game.user1.id == userId)
+            {
+                Clients.Client(game.user2.connectionId).onStopGame();
+            }
+            else
+            {
+                Clients.Client(game.user1.connectionId).onStopGame();
+            }
 
-            HubProfile enemy = PlayProfiles.FirstOrDefault(x => x.id == enemyId);
-            if(enemy != null) Clients.Client(enemy.connectionId).onStopGame();
+            PlayProfiles.Remove(game);
         }
 
         public override Task OnDisconnected(bool stopCalled)
         {
-
             System.Threading.Thread.Sleep(500);
 
-            var playProfile = PlayProfiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             var profile = Profiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             if (profile != null)
             {
@@ -131,9 +171,10 @@ namespace blackjack_WebAPI.Hubs
                 Clients.All.onUserDisconnected(profile);
             }
 
+            var playProfile = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
             if (playProfile != null)
             {
-                PlayProfiles.Remove(profile);
+                PlayProfiles.Remove(playProfile);
             }
 
             return base.OnDisconnected(stopCalled);

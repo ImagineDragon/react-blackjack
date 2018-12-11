@@ -57,7 +57,14 @@ namespace blackjack_WebAPI.Models
         public bool ready { get; set; }
     }
 
-    public class Messages
+    public class Game
+    {
+        public HubProfile user1 { get; set; }
+        public HubProfile user2 { get; set; }
+        public List<Message> messages { get; set; }
+    }
+
+    public class Message
     {
         public string userName { get; set; }
         public string message { get; set; }

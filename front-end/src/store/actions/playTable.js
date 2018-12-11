@@ -341,6 +341,9 @@ function onDeletDib() {
 
 
 async function updateData(cash){
+    localStorage.setItem('cash', cash);
+    localStorage.setItem('bet', 0);
+    localStorage.removeItem('dibsBet');
     const userUpdate = localStorage.getItem('userId');
     const dataUpdate ={
         userUpdate, cash
