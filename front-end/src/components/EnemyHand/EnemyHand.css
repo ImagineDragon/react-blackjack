@@ -1,0 +1,23 @@
+.EnemyHand{
+    position: absolute;
+	top: 90px;
+	height: 175px;
+	padding: 0;
+	left: 50%;
+	margin-right: -50%;
+	transform: translate(-50%, -50%)
+}
+
+.EnemyHand > p{
+	float: left;
+	width: 23px;
+	height: 20px;
+	line-height: 20px;
+	text-align: center;
+	margin-right: 3px;
+	margin-top: 0;
+	color: #000;
+	background-color: #fff;
+	font-size: 1.1em;
+	font-weight: 600;
+}

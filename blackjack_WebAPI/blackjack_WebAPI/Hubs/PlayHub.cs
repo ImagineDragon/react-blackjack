@@ -118,7 +118,7 @@ namespace blackjack_WebAPI.Hubs
             Clients.Client(enemy.connectionId).onMessage(mes);
         }
 
-        public void UserBet(int cash, int bet)
+        public void UserBet(int cash, int bet, string dibsBet)
         {
             HubProfile user;
             HubProfile enemy;
@@ -142,12 +142,26 @@ namespace blackjack_WebAPI.Hubs
             
             Clients.Caller.onBet(user);
 
-            Clients.Client(enemy.connectionId).onEnemyBet(user);
+            Clients.Client(enemy.connectionId).onEnemyBet(user, dibsBet);
+        }
+
+        public void PlayOffer()
+        {
+            int index = PlayProfiles.FindIndex(u => u.user1.connectionId.ToString() == Context.ConnectionId || u.user2.connectionId.ToString() == Context.ConnectionId);
+            if (PlayProfiles[index].user1.connectionId == Context.ConnectionId)
+            {
+                Clients.Client(PlayProfiles[index].user2.connectionId).onPlayOffer();
+            }
+            else
+            {
+                Clients.Client(PlayProfiles[index].user1.connectionId).onPlayOffer();
+            }
         }
 
         public void StopGame(string userId)
         {
             Game game = PlayProfiles.FirstOrDefault(x => x.user1.id == userId || x.user2.id == userId);
+            if (game == null) return;
             if (game.user1.id == userId)
             {
                 Clients.Client(game.user2.connectionId).onStopGame();
@@ -162,7 +176,7 @@ namespace blackjack_WebAPI.Hubs
 
         public override Task OnDisconnected(bool stopCalled)
         {
-            System.Threading.Thread.Sleep(500);
+            System.Threading.Thread.Sleep(1000);
 
             var profile = Profiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             if (profile != null)

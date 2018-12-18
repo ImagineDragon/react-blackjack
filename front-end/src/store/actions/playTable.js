@@ -23,14 +23,39 @@ export function getDataUser(userId){
         const data = {
             userId: userId  
         }
-        const respons = await axios.post('http://localhost:3001/play', data);
-        if(respons.data){
-            const setStateUser = {
-                cash: respons.data.bet,
-                name: respons.data.name
+        if(localStorage.getItem('cash') == null){
+            const respons = await axios.post('http://localhost:3001/play', data);
+            if(respons.data){                
+                localStorage.setItem('cash', respons.data.bet);
+                localStorage.setItem('bet', 0);
+                localStorage.setItem('name', respons.data.name);
+                localStorage.setItem('playerHand', '');
+                localStorage.setItem('dealerHand', '');
+                localStorage.setItem('playerHandSum', 0);
+                localStorage.setItem('dealerHandSum', 0);
             }
-            dispatch(dataUser(setStateUser));
         }
+        let isPlay = parseInt(localStorage.getItem('bet')) > 0;
+        let setStateUser;
+        if(localStorage.getItem('playerHand') == ""){
+            setStateUser = {
+                bet: parseInt(localStorage.getItem('bet')),
+                cash: parseInt(localStorage.getItem('cash')),
+                name: localStorage.getItem('name'),
+                isPlay: isPlay
+            }
+        } else{
+            setStateUser = {
+                playerHand: JSON.parse(localStorage.getItem('playerHand')),
+                dealerHand: JSON.parse(localStorage.getItem('dealerHand')),
+                playerHandSum: parseInt(localStorage.getItem('playerHandSum')),
+                dealerHandSum: parseInt(localStorage.getItem('dealerHandSum')),
+                bet: parseInt(localStorage.getItem('bet')),
+                cash: parseInt(localStorage.getItem('cash')),
+                name: localStorage.getItem('name')
+            }
+        }
+        dispatch(dataUser(setStateUser));
     }
        
 }
@@ -42,6 +67,11 @@ export function onPlayHandler (){
         let dealerHand = await [getCard(state)];
         let playerHandSum = await getSum(playerHand);
         let dealerHandSum = await getSum(dealerHand);
+        
+        localStorage.setItem('playerHand', JSON.stringify(playerHand));
+        localStorage.setItem('dealerHand', JSON.stringify(dealerHand));
+        localStorage.setItem('playerHandSum', playerHandSum);
+        localStorage.setItem('dealerHandSum', dealerHandSum);
 
         const set_state = {
             playerHand,
@@ -203,7 +233,8 @@ export function onMoreHandler(){
             playerHand,
             playerHandSum
         }
-
+        localStorage.setItem('playerHand', JSON.stringify(playerHand));
+        localStorage.setItem('playerHandSum', playerHandSum);
         dispatch(playHand(play_setState));
 
 
@@ -344,6 +375,10 @@ async function updateData(cash){
     localStorage.setItem('cash', cash);
     localStorage.setItem('bet', 0);
     localStorage.removeItem('dibsBet');
+    localStorage.setItem('playerHand', '');
+    localStorage.setItem('dealerHand', '');
+    localStorage.setItem('playerHandSum', 0);
+    localStorage.setItem('dealerHandSum', 0);
     const userUpdate = localStorage.getItem('userId');
     const dataUpdate ={
         userUpdate, cash

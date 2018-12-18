@@ -28,21 +28,45 @@
     font-weight: 600;
     text-align: center;
 	color: black;
-	left: 46%; 
-  	bottom: 58%;
     background: url(../../images/fishkablue.png) no-repeat center;
     background-size: 100% 100%;
 	z-index: 4;
+}
+
+.user_dib_1{
+    left: 46%; 
+    bottom: 48%;    
 	animation: dib_1 .5s linear;
 }
-	@keyframes dib_1{
-	  0%  { left: 5%; 
-	  		bottom: 5%;
-	  	}
-	  100% { left: 46%; 
-	  		bottom: 58%;
-	  	}
-	}
+
+.enemy_dib_1{
+    left: 46%; 
+    bottom: 68%;
+	animation: enemy_dib_1 .5s linear;
+}
+
+@keyframes dib_1{
+    0%  { 
+        left: 5%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 46%; 
+        bottom: 48%;
+    }
+}
+
+@keyframes enemy_dib_1{
+    0%  { 
+        left: 46%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 46%; 
+        bottom: 68%;
+    }
+}
+
 
 .dib_5{
     position: absolute;
@@ -54,22 +78,45 @@
     font-weight: 600;
     cursor: pointer;
     color: black;
-    left: 47%; 
-    bottom: 58%;
     text-align: center;
     background: url(../../images/fishkablue.png) no-repeat center;
     background-size: 100% 100%;
     z-index: 5;
-    animation: dib_5 0.5s linear;
 }
-    @keyframes dib_5{
-          0%  { left: 5%; 
-                  bottom: 5%;
-              }
-          100% { left: 47%; 
-                  bottom: 58%;
-              }
-        }
+
+.user_dib_5{
+    left: 47%; 
+    bottom: 48%; 
+	animation: dib_5 .5s linear;
+}
+
+.enemy_dib_5{
+    left: 47%; 
+    bottom: 68%;
+	animation: enemy_dib_5 .5s linear;
+}
+
+@keyframes dib_5{
+    0%  { 
+        left: 5%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 47%; 
+        bottom: 48%;
+    }
+}
+
+@keyframes enemy_dib_5{
+    0%  { 
+        left: 47%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 47%; 
+        bottom: 68%;
+    }
+}
 
 .dib_25{
     position: absolute;
@@ -80,22 +127,46 @@
     font-size: 1.1em;
     font-weight: 600;
     color: black;
-    left: 48%; 
-    bottom: 58.5%;
     text-align: center;
     background: url(../../images/fishkayellow.png) no-repeat center;
     background-size: 100% 100%;
     z-index: 6;
-    animation: dib_25 0.5s linear;
 }
-    @keyframes dib_25{
-            0%  { left: 12%; 
-                    bottom: 5%;
-                }
-            100% { left: 48%; 
-                    bottom: 58.5%;
-                }
-        }
+
+.user_dib_25{
+    left: 48%; 
+    bottom: 48.5%;
+	animation: dib_25 .5s linear;
+}
+
+.enemy_dib_25{
+    left: 48%; 
+    bottom: 68.5%;
+	animation: enemy_dib_25 .5s linear;
+}
+
+@keyframes dib_25{
+    0%  { 
+        left: 12%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 48%; 
+        bottom: 48.5%;
+    }
+}
+
+@keyframes enemy_dib_25{
+    0%  { 
+        left: 48%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 48%; 
+        bottom: 68.5%;
+    }
+}
+
     
 .dib_50{
     position: absolute;
@@ -107,22 +178,46 @@
     font-weight: 600;
     cursor: pointer;
     color: black;
-    left: 49%; 
-    bottom: 59%;
     text-align: center;
     background: url(../../images/fishkayellow.png) no-repeat center;
     background-size: 100% 100%;
     z-index: 7;
-    animation: dib_50 0.5s linear;
 }
-    @keyframes dib_50{
-            0%  { left: 12%; 
-                    bottom: 5%;
-                }
-            100% { left: 49%; 
-                    bottom: 59%;
-                }
-        }
+
+.user_dib_50{
+    left: 49%; 
+    bottom: 49%;
+	animation: dib_50 .5s linear;
+}
+
+.enemy_dib_50{
+    left: 49%; 
+    bottom: 69%;
+	animation: enemy_dib_50 .5s linear;
+}
+
+@keyframes dib_50{
+    0%  { 
+        left: 12%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 49%; 
+        bottom: 49%;
+    }
+}
+
+@keyframes enemy_dib_50{
+    0%  { 
+        left: 49%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 49%; 
+        bottom: 69%;
+    }
+}
+
 .dib_100{
     position: absolute;
     width: 75px;
@@ -133,22 +228,45 @@
     font-weight: 600;
     cursor: pointer;
     color: black;
-    left: 50%; 
-    bottom: 58.5%;
     text-align: center;
     background: url(../../images/fishka1.png) no-repeat center;
     background-size: 100% 100%;
     z-index: 8;
-    animation: dib_100 0.5s linear;
 }
-    @keyframes dib_100{
-            0%  { left: 18%; 
-                    bottom: 5%;
-                }
-            100% { left: 50%; 
-                    bottom: 58.5%;
-                }
-        }
+
+.user_dib_100{
+    left: 50%; 
+    bottom: 48.5%;
+	animation: dib_100 .5s linear;
+}
+
+.enemy_dib_100{
+    left: 50%; 
+    bottom: 68.5%;
+	animation: enemy_dib_100 .5s linear;
+}
+
+@keyframes dib_100{
+    0%  { 
+        left: 18%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 50%; 
+        bottom: 48.5%;
+    }
+}
+
+@keyframes enemy_dib_100{
+    0%  { 
+        left: 50%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 50%; 
+        bottom: 68.5%;
+    }
+}
     
 .dib_200{
     position: absolute;
@@ -160,27 +278,48 @@
     font-weight: 600;
     cursor: pointer;
     color: black;
-    left: 51%; 
-    bottom: 58%;
     text-align: center;
     background: url(../../images/fishka1.png) no-repeat center;
     background-size: 100% 100%;
     z-index: 9;
-    animation: dib_200 0.5s linear;
 }
-    @keyframes dib_200{
-            0%  { left: 18%; 
-                    bottom: 5%;
-                }
-            100% { left: 51%; 
-                    bottom: 58%;
-                }
-        }
+
+.user_dib_200{
+    left: 51%; 
+    bottom: 48%;
+	animation: dib_200 .5s linear;
+}
+
+.enemy_dib_200{
+    left: 51%; 
+    bottom: 68%;
+	animation: enemy_dib_200 .5s linear;
+}
+
+@keyframes dib_200{
+    0%  { 
+        left: 18%; 
+        bottom: 5%;
+    }
+    100% { 
+        left: 51%; 
+        bottom: 48%;
+    }
+}
+
+@keyframes enemy_dib_200{
+    0%  { 
+        left: 51%; 
+        bottom: 95%;
+    }
+    100% { 
+        left: 51%; 
+        bottom: 68%;
+    }
+}
 
 .Button{
     position: absolute;
     right: 20px;
     top: 20px;
 }
-    
-    

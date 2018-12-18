@@ -1,0 +1,12 @@
+.Timer{
+    position: absolute;
+    z-index: 10;
+    left: 50%;
+    margin-left: -175px;
+    width: 350px;
+    color: #fff;
+    background-color: rgba(100, 100, 100, 0.8);
+    font-weight: bold;
+    font-size: 50px;
+    text-align: center;
+}

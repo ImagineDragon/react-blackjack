@@ -7,7 +7,9 @@ import Rate from '../../components/Rate/Rate'
 import Enemy from '../../components/Enemy/Enemy'
 import PlayButton from '../../components/UI/PlayButton/PlayButton'
 import Button from '../../components/UI/Button/Button'
+import Timer from '../../components/UI/Timer/Timer'
 import DealerHand from '../../components/DealerHand/DealerHand'
+import EnemyHand from '../../components/EnemyHand/EnemyHand'
 import PlayerHand from '../../components/PlayerHand/PlayerHand'
 import {fetchMakeBet, 
         onPlayHandler,
@@ -29,7 +31,9 @@ class PlayTable extends Component {
         enemyName: '',
         enemyBet: 0,
         enemyCash: 0,
-        messages: []
+        messages: [],
+        timer: false,
+        time: 20
     }
 
     isLogout = () => {
@@ -43,66 +47,81 @@ class PlayTable extends Component {
     
    onCreateDibHandler = value =>{   
         let div = document.createElement('div');
+        let div_enemy = document.createElement('div');
         switch(value){
             case '1':
-                div.className = classes.dib_1 
+                div.className = classes.dib_1 + ' ' + classes.user_dib_1
+                div_enemy.className = classes.dib_1 + ' ' + classes.enemy_dib_1
                 break;
             case '5':
-                div.className = classes.dib_5
+                div.className = classes.dib_5 + ' ' + classes.user_dib_5
+                div_enemy.className = classes.dib_5 + ' ' + classes.enemy_dib_5
                 break;
             case '25':
-                div.className = classes.dib_25
+                div.className = classes.dib_25 + ' ' + classes.user_dib_25
+                div_enemy.className = classes.dib_25 + ' ' + classes.enemy_dib_25
                 break;
             case '50':
-                div.className = classes.dib_50
+                div.className = classes.dib_50 + ' ' + classes.user_dib_50
+                div_enemy.className = classes.dib_50 + ' ' + classes.enemy_dib_50
                 break;
             case '100':
-                div.className = classes.dib_100
+                div.className = classes.dib_100 + ' ' + classes.user_dib_100
+                div_enemy.className = classes.dib_100 + ' ' + classes.enemy_dib_100
                 break;
             default:
-                div.className = classes.dib_200
+                div.className = classes.dib_200 + ' ' + classes.user_dib_200
+                div_enemy.className = classes.dib_200 + ' ' + classes.enemy_dib_200
         }        
         div.innerHTML = value;
-        let bet = 0;
+        div_enemy.innerHTML = value;
+        let bet;
         let cash;
         if(localStorage.getItem('enemyId') != -1){
             bet = (this.state.bet) + parseInt(value);
             cash = (this.state.cash) - parseInt(value);
-            console.log('userBet');
-            playHubProxy.invoke('userBet', cash, bet);
         } else {
-            if(localStorage.getItem('bet') != null){
-                bet = parseInt(localStorage.getItem('bet')) + parseInt(value);
-                cash = parseInt(localStorage.getItem('cash')) - parseInt(value);
-            } else{
-                bet += parseInt(value);
-                cash = (parseInt(this.props.cash)) - parseInt(value);
-            }
+            bet = (parseInt(localStorage.getItem('bet'))) + parseInt(value);
+            cash = (parseInt(this.props.cash)) - parseInt(value);
+        }
+        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0){            
             localStorage.setItem('bet', bet);
             localStorage.setItem('cash', cash);
-            this.setState({
-                bet: bet,
-                cash: cash
-            });
-        }
-        console.log('state bet ' + this.state.bet);
-        console.log('props cash ' + this.props.cash);
-        console.log('props bet ' + this.props.bet);
-        console.log('bet ' + bet);
-        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0){
-            let isPlay = true;
-            this.props.fetchMakeBet(bet, cash, isPlay);
+            localStorage.setItem('isPlay', 'true');
+            this.props.fetchMakeBet(bet, cash, true);
             document.getElementById('dibsBet').appendChild(div);
             localStorage.setItem('dibsBet', document.getElementById('dibsBet').innerHTML);
-        }
+            var wrapper = document.createElement('div');
+            wrapper.appendChild(div_enemy);
+            
+            if(localStorage.getItem('enemyId') != -1){
+                playHubProxy.invoke('userBet', cash, bet, wrapper.innerHTML);
+                console.log(localStorage.getItem('enemyDibsBet'));
+            }
+        }        
     }
 
     componentDidMount(){
         userId = localStorage.getItem('userId');
         enemyId = localStorage.getItem('enemyId');
+
+        console.log(localStorage.getItem('timer'));
+        if(localStorage.getItem('timer') == 'true'){
+            this.setState({
+                time: parseInt(localStorage.getItem('time')),
+                timer: true
+            });
+            console.log('timer true');
+            this.timerHandler();
+        }
         
         if(localStorage.getItem('dibsBet') != null){
             document.getElementById('dibsBet').innerHTML = (localStorage.getItem('dibsBet'));
+        }
+        
+        console.log(localStorage.getItem('enemyDibsBet'));
+        if(localStorage.getItem('enemyDibsBet') != null){
+            document.getElementById('enemyDibsBet').innerHTML = (localStorage.getItem('enemyDibsBet'));
         }
 
         console.log('user = ' + userId + ' enemy = ' + enemyId);
@@ -118,13 +137,6 @@ class PlayTable extends Component {
         }
         this.props.getDataUser(userId);
 
-        if(localStorage.getItem('bet') != null){
-            this.setState({
-                bet: localStorage.getItem('bet'),
-                cash: localStorage.getItem('cash')
-            });
-        }
-
         playHubProxy.on('onGameStart', function(user, enemy, messages){
             this.setState({
                 cash: user.cash,
@@ -137,7 +149,16 @@ class PlayTable extends Component {
             scrollDown();
         }.bind(this));
 
-        playHubProxy.on('onEnemyBet', function(enemy){
+        playHubProxy.on('onEnemyBet', function(enemy, dibsBet){
+            if(localStorage.getItem('enemyDibsBet') == null){
+                localStorage.setItem('enemyDibsBet', dibsBet);
+            } else{
+                localStorage.setItem('enemyDibsBet', localStorage.getItem('enemyDibsBet') + dibsBet);
+            }
+            var tmp = document.createElement('div');
+            tmp.innerHTML = dibsBet;
+            document.getElementById('enemyDibsBet').appendChild(tmp);
+            console.log(dibsBet);
             this.setState({
                 enemyCash: enemy.cash,
                 enemyBet: enemy.bet
@@ -162,6 +183,15 @@ class PlayTable extends Component {
             scrollDown();
         }.bind(this));
 
+        playHubProxy.on('onPlayOffer', function(){//------------------------------enemy offers play
+            localStorage.setItem('timer', true);
+            this.setState({
+                time: 20,
+                timer: true
+            });
+            this.timerHandler();
+        }.bind(this));
+
         if(enemyId != -1){
             connection.start().done(function(){
                 console.log('start game');
@@ -178,14 +208,43 @@ class PlayTable extends Component {
             enemyBet: 0,
             enemyCash: 0
         });
+        localStorage.removeItem('playerHand');
+        localStorage.removeItem('dealerHand');
+        localStorage.removeItem('playerHandSum');
+        localStorage.removeItem('dealerHandSum');
+
         localStorage.removeItem('bet');
+        localStorage.removeItem('cash');
         localStorage.removeItem('dibsBet');
+        localStorage.removeItem('enemyDibsBet');
+        localStorage.removeItem('isPlay');
+        localStorage.removeItem('name');
         playHubProxy.off('onGameStart');
         playHubProxy.off('onEnemyBet');
         playHubProxy.off('onBet');
         playHubProxy.off('onStopGame');
         playHubProxy.off('onMessage');
+        playHubProxy.off('onPlayOffer');
+
+        clearInterval(this.timer);
         connection.stop();
+    }
+
+    timerHandler = () =>{
+        this.timer = setInterval(() => {
+            console.log(this.state.time);
+            if(this.state.time == 0){
+                clearInterval(this.timer);
+                localStorage.setItem('timer', false);
+                this.endGame();
+                this.props.history.push('/profile');
+            } else{
+                localStorage.setItem('time', this.state.time - 1);
+                this.setState({
+                    time: this.state.time - 1
+                });
+            }
+        }, 1000);
     }
 
     onSend = (value) =>{
@@ -193,6 +252,19 @@ class PlayTable extends Component {
             messages: [...this.state.messages, {userName: this.props.nameUser, message: value}]
         });
         playHubProxy.invoke('gameChat', userId, value);
+    }
+
+    onPlay = ()=>{
+        clearInterval(this.timer);
+        localStorage.setItem('isPlay', 'false');
+        localStorage.setItem('timer', false);
+        this.setState({
+            time: 20,
+            timer: false
+        });
+        localStorage.setItem('time', 20);
+        playHubProxy.invoke('playOffer');
+        //this.props.onPlayHandler();
     }
 
     endGame = () =>{
@@ -208,11 +280,18 @@ class PlayTable extends Component {
         return(
             <div className={classes.PlayTable}>
             <div className={classes.Container}>
-                <Rate
-                    bet={this.state.bet}
-                    cash={this.state.cash == 0 ? this.props.cash : this.state.cash}
-                    name={this.props.nameUser}
-                />                
+                {enemyId != -1 ?
+                    <Rate
+                        bet={this.state.bet}
+                        cash={this.state.cash}
+                        name={this.props.nameUser}
+                    /> :
+                    <Rate
+                        bet={this.props.bet}
+                        cash={this.props.cash}
+                        name={this.props.nameUser}
+                    />
+                }
                 {enemyId != -1 ?
                     <Enemy 
                         bet={this.state.enemyBet}
@@ -220,11 +299,21 @@ class PlayTable extends Component {
                         name={this.state.enemyName}
                     /> : null
                 }
-                <DealerHand 
-                    dealerHand={this.props.dealerHand}
-                    dealerHandSum={this.props.dealerHandSum}
-                />
+                {enemyId == -1 ?
+                    <DealerHand 
+                        dealerHand={this.props.dealerHand}
+                        dealerHandSum={this.props.dealerHandSum}
+                    /> :
+                    <EnemyHand 
+                        enemyHand={2}//----------------------------------------------enemy cards
+                    />
+                }
                 <div id="dibsBet"></div>
+                <div id="enemyDibsBet"></div>
+                <Timer
+                    timer={this.state.timer}
+                    time={this.state.time}
+                />
                 <PlayerHand 
                     playerHand={this.props.playerHand}
                     playerHandSum={this.props.playerHandSum}
@@ -234,10 +323,10 @@ class PlayTable extends Component {
                     onDibCLick={this.onCreateDibHandler}
                 />
                 <PlayButton 
-                    onPlay={this.props.onPlayHandler}
+                    onPlay={enemyId != -1 ? this.onPlay : this.props.onPlayHandler}
                     onEnough={this.props.onEnoughHandler}
                     onMore={this.props.onMoreHandler}
-                    disabledPlay={!this.props.isPlay}
+                    disabledPlay={!(localStorage.getItem('isPlay') == 'true')}
                     disabledEnough={!this.props.isEnough}
                     disabledMore={!this.props.isMore}
                 />

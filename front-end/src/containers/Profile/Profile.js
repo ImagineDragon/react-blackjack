@@ -73,6 +73,18 @@ class Profile extends Component{
     }
 
     componentDidMount(){
+        localStorage.removeItem('playerHand');
+        localStorage.removeItem('dealerHand');
+        localStorage.removeItem('playerHandSum');
+        localStorage.removeItem('dealerHandSum');
+
+        localStorage.removeItem('bet');
+        localStorage.removeItem('cash');
+        localStorage.removeItem('dibsBet');
+        localStorage.removeItem('enemyDibsBet');
+        localStorage.removeItem('timer');
+        localStorage.removeItem('name');
+
         localStorage.setItem('enemyId', -1);
         const userId = localStorage.getItem('userId');
         this.getDataUser(userId);

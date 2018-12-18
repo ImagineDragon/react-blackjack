@@ -324,10 +324,32 @@ export default function playReducer(state = initialState, action){
                 ...state
             }
         case DATA_USER:
-            return{
-                ...state,
-                cash: action.cash,
-                nameUser: action.name
+            if(action.playerHand == undefined){
+                return{
+                    ...state,
+                    playerHand: [],
+                    playerHandSum: 0,
+                    dealerHand: [],
+                    dealerHandSum: 0,
+                    bet: action.bet,
+                    cash: action.cash,
+                    nameUser: action.name,
+                    isPlay: action.isPlay
+                }
+            } else{
+                return{
+                    ...state,
+                    playerHand: action.playerHand,
+                    playerHandSum: action.playerHandSum,
+                    dealerHand: action.dealerHand,
+                    dealerHandSum: action.dealerHandSum,
+                    bet: action.bet,
+                    cash: action.cash,
+                    nameUser: action.name,
+                    isPlay: false,
+                    isEnough: true,
+                    isMore: true
+                }
             }
         case FETCH_MAKE_BET:
             return{
