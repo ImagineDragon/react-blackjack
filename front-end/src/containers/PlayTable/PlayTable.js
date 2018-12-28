@@ -6,6 +6,7 @@ import Dibs from '../../components/Dibs/DIbs'
 import Rate from '../../components/Rate/Rate'
 import Enemy from '../../components/Enemy/Enemy'
 import PlayButton from '../../components/UI/PlayButton/PlayButton'
+import BetButton from '../../components/UI/BetButton/BetButton'
 import Button from '../../components/UI/Button/Button'
 import Timer from '../../components/UI/Timer/Timer'
 import DealerHand from '../../components/DealerHand/DealerHand'
@@ -15,10 +16,14 @@ import {fetchMakeBet,
         onPlayHandler,
         onEnoughHandler,
         onMoreHandler,
-        getDataUser} from '../../store/actions/playTable'
+        getDataUser,
+        onPlayWithUserHandler,
+        onMoreWithUserHandler,
+        onEnoughWithUserHandler} from '../../store/actions/playTable'
 
 import Chat, {scrollDown} from '../../components/UI/Chat/Chat'
 import {connection, playHubProxy} from '../../Hubs/Hubs'
+import { runInThisContext } from 'vm';
 
 var userId;
 var enemyId;
@@ -32,8 +37,15 @@ class PlayTable extends Component {
         enemyBet: 0,
         enemyCash: 0,
         messages: [],
+        enableBet: false,
         timer: false,
-        time: 20
+        time: 20,
+        betCount: 3,
+        isFold: false,
+        isCheck: false,
+        isRaise: false,
+        isBet: true,
+        firstBet: true
     }
 
     isLogout = () => {
@@ -45,36 +57,7 @@ class PlayTable extends Component {
         console.log('stop');
     }
     
-   onCreateDibHandler = value =>{   
-        let div = document.createElement('div');
-        let div_enemy = document.createElement('div');
-        switch(value){
-            case '1':
-                div.className = classes.dib_1 + ' ' + classes.user_dib_1
-                div_enemy.className = classes.dib_1 + ' ' + classes.enemy_dib_1
-                break;
-            case '5':
-                div.className = classes.dib_5 + ' ' + classes.user_dib_5
-                div_enemy.className = classes.dib_5 + ' ' + classes.enemy_dib_5
-                break;
-            case '25':
-                div.className = classes.dib_25 + ' ' + classes.user_dib_25
-                div_enemy.className = classes.dib_25 + ' ' + classes.enemy_dib_25
-                break;
-            case '50':
-                div.className = classes.dib_50 + ' ' + classes.user_dib_50
-                div_enemy.className = classes.dib_50 + ' ' + classes.enemy_dib_50
-                break;
-            case '100':
-                div.className = classes.dib_100 + ' ' + classes.user_dib_100
-                div_enemy.className = classes.dib_100 + ' ' + classes.enemy_dib_100
-                break;
-            default:
-                div.className = classes.dib_200 + ' ' + classes.user_dib_200
-                div_enemy.className = classes.dib_200 + ' ' + classes.enemy_dib_200
-        }        
-        div.innerHTML = value;
-        div_enemy.innerHTML = value;
+    onCreateDibHandler = value =>{
         let bet;
         let cash;
         if(localStorage.getItem('enemyId') != -1){
@@ -84,19 +67,73 @@ class PlayTable extends Component {
             bet = (parseInt(localStorage.getItem('bet'))) + parseInt(value);
             cash = (parseInt(this.props.cash)) - parseInt(value);
         }
-        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0){            
+        if(bet !== 0 && cash >= 0 && (this.props.playerHandSum === 0 || this.state.enableBet) && (this.state.enableBet && bet <= this.state.enemyCash || localStorage.getItem('enemyId') == -1 )){
+            let wrapper = document.createElement('div');
+            while(value > 0){
+                let div = document.createElement('div');
+                let div_enemy = document.createElement('div');
+                if(value >= 200){
+                    div.className = classes.dib_200 + ' ' + classes.user_dib_200
+                    div_enemy.className = classes.dib_200 + ' ' + classes.enemy_dib_200
+                    value -= 200;
+                    div.innerHTML = 200;
+                    div_enemy.innerHTML = 200;
+                } else if(value >= 100){
+                    div.className = classes.dib_100 + ' ' + classes.user_dib_100
+                    div_enemy.className = classes.dib_100 + ' ' + classes.enemy_dib_100
+                    value -= 100;
+                    div.innerHTML = 100;
+                    div_enemy.innerHTML = 100;
+                } else if(value >= 50){
+                    div.className = classes.dib_50 + ' ' + classes.user_dib_50
+                    div_enemy.className = classes.dib_50 + ' ' + classes.enemy_dib_50
+                    value -= 50;
+                    div.innerHTML = 50;
+                    div_enemy.innerHTML = 50;
+                } else if(value >= 25){
+                    div.className = classes.dib_25 + ' ' + classes.user_dib_25
+                    div_enemy.className = classes.dib_25 + ' ' + classes.enemy_dib_25
+                    value -= 25;
+                    div.innerHTML = 25;
+                    div_enemy.innerHTML = 25;
+                } else if(value >= 5){
+                    div.className = classes.dib_5 + ' ' + classes.user_dib_5
+                    div_enemy.className = classes.dib_5 + ' ' + classes.enemy_dib_5
+                    value -= 5;
+                    div.innerHTML = 5;
+                    div_enemy.innerHTML = 5;
+                } else{
+                    div.className = classes.dib_1 + ' ' + classes.user_dib_1
+                    div_enemy.className = classes.dib_1 + ' ' + classes.enemy_dib_1
+                    value -= 1;
+                    div.innerHTML = 1;
+                    div_enemy.innerHTML = 1;
+                }
+                document.getElementById('dibsBet').appendChild(div);
+                wrapper.appendChild(div_enemy);
+            }
             localStorage.setItem('bet', bet);
             localStorage.setItem('cash', cash);
-            localStorage.setItem('isPlay', 'true');
+            this.setState({
+                bet: bet,
+                cash: cash
+            });
+            if(bet > this.state.enemyBet && this.state.betCount > 0){
+                this.setState({
+                    isCheck: false,
+                    isRaise: true
+                });
+            } else{
+                this.setState({
+                    isCheck: true,
+                    isRaise: false
+                });
+            }
             this.props.fetchMakeBet(bet, cash, true);
-            document.getElementById('dibsBet').appendChild(div);
             localStorage.setItem('dibsBet', document.getElementById('dibsBet').innerHTML);
-            var wrapper = document.createElement('div');
-            wrapper.appendChild(div_enemy);
             
             if(localStorage.getItem('enemyId') != -1){
                 playHubProxy.invoke('userBet', cash, bet, wrapper.innerHTML);
-                console.log(localStorage.getItem('enemyDibsBet'));
             }
         }        
     }
@@ -105,21 +142,24 @@ class PlayTable extends Component {
         userId = localStorage.getItem('userId');
         enemyId = localStorage.getItem('enemyId');
 
-        console.log(localStorage.getItem('timer'));
-        if(localStorage.getItem('timer') == 'true'){
+        if(localStorage.getItem('isBet') == null){
+            localStorage.setItem('isBet', this.state.isBet);
+        } else{
             this.setState({
-                time: parseInt(localStorage.getItem('time')),
-                timer: true
+                isBet: localStorage.getItem('isBet') == 'true'
             });
-            console.log('timer true');
-            this.timerHandler();
+        }
+
+        if(localStorage.getItem('betCount') !== null){
+            this.setState({
+                betCount: parseInt(localStorage.getItem('betCount'))
+            });
         }
         
         if(localStorage.getItem('dibsBet') != null){
             document.getElementById('dibsBet').innerHTML = (localStorage.getItem('dibsBet'));
         }
         
-        console.log(localStorage.getItem('enemyDibsBet'));
         if(localStorage.getItem('enemyDibsBet') != null){
             document.getElementById('enemyDibsBet').innerHTML = (localStorage.getItem('enemyDibsBet'));
         }
@@ -137,7 +177,7 @@ class PlayTable extends Component {
         }
         this.props.getDataUser(userId);
 
-        playHubProxy.on('onGameStart', function(user, enemy, messages){
+        playHubProxy.on('onGameStart', function(user, enemy, messages, firstId){
             this.setState({
                 cash: user.cash,
                 bet: user.bet,
@@ -146,6 +186,25 @@ class PlayTable extends Component {
                 enemyBet: enemy.bet,
                 messages: messages
             });
+            if(localStorage.getItem('enableBet') == null){
+                if(firstId == localStorage.getItem('userId')){
+                    this.playOffer();
+                }
+            } else if(localStorage.getItem('enableBet') == 'true'){
+                this.setState({
+                    enableBet: true,
+                    isFold: true,
+                    isCheck: this.state.enemyBet > this.state.bet,
+                    isRaise: this.state.enemyBet < this.state.bet && this.state.betCount > 0
+                });
+            } else{
+                this.setState({
+                    enableBet: false,
+                    isFold: false,
+                    isCheck: false,
+                    isRaise: false
+                });
+            }
             scrollDown();
         }.bind(this));
 
@@ -158,14 +217,13 @@ class PlayTable extends Component {
             var tmp = document.createElement('div');
             tmp.innerHTML = dibsBet;
             document.getElementById('enemyDibsBet').appendChild(tmp);
-            console.log(dibsBet);
             this.setState({
                 enemyCash: enemy.cash,
                 enemyBet: enemy.bet
             });
         }.bind(this));
 
-        playHubProxy.on('onBet', function(user){                    
+        playHubProxy.on('onBet', function(user){                  
             this.setState({                    
                 cash: user.cash,
                 bet: user.bet
@@ -183,14 +241,42 @@ class PlayTable extends Component {
             scrollDown();
         }.bind(this));
 
-        playHubProxy.on('onPlayOffer', function(){//------------------------------enemy offers play
-            localStorage.setItem('timer', true);
+        playHubProxy.on('onPlayOffer', function(userId){
+            if(this.state.bet == this.state.enemyBet && this.state.bet > 0 && this.state.firstBet){
+                this.setState({
+                    isBet: false,
+                    firstBet: false,
+                    enableBet: false
+                });
+                localStorage.setItem('enableBet', 'false');
+                localStorage.setItem('isBet', 'false');
+                localStorage.setItem('firstBet', 'false');
+                this.props.onPlayWithUserHandler();
+            } else if(userId == localStorage.getItem('userId')){
+                this.setState({
+                    enableBet: false,
+                    isRaise: false,
+                    isCheck: false,
+                    isFold: false
+                });
+                localStorage.setItem('enableBet', 'false');
+            } else{
+                this.setState({
+                    enableBet: true,
+                    isFold: true,
+                    isCheck: this.state.enemyBet > 0
+                });
+                localStorage.setItem('enableBet', 'true');
+            }
+            console.log('playOffer ' + localStorage.getItem('enableBet'));
+        }.bind(this));
+
+        playHubProxy.on('onTimer', function(time){
             this.setState({
-                time: 20,
+                time: time,
                 timer: true
             });
-            this.timerHandler();
-        }.bind(this));
+        }.bind(this));            
 
         if(enemyId != -1){
             connection.start().done(function(){
@@ -214,10 +300,13 @@ class PlayTable extends Component {
         localStorage.removeItem('dealerHandSum');
 
         localStorage.removeItem('bet');
+        localStorage.removeItem('isBet');
+        localStorage.removeItem('enableBet');
+        localStorage.removeItem('firstBet');
+        localStorage.removeItem('betCount');
         localStorage.removeItem('cash');
         localStorage.removeItem('dibsBet');
         localStorage.removeItem('enemyDibsBet');
-        localStorage.removeItem('isPlay');
         localStorage.removeItem('name');
         playHubProxy.off('onGameStart');
         playHubProxy.off('onEnemyBet');
@@ -225,26 +314,9 @@ class PlayTable extends Component {
         playHubProxy.off('onStopGame');
         playHubProxy.off('onMessage');
         playHubProxy.off('onPlayOffer');
+        playHubProxy.off('onTimer');
 
-        clearInterval(this.timer);
         connection.stop();
-    }
-
-    timerHandler = () =>{
-        this.timer = setInterval(() => {
-            console.log(this.state.time);
-            if(this.state.time == 0){
-                clearInterval(this.timer);
-                localStorage.setItem('timer', false);
-                this.endGame();
-                this.props.history.push('/profile');
-            } else{
-                localStorage.setItem('time', this.state.time - 1);
-                this.setState({
-                    time: this.state.time - 1
-                });
-            }
-        }, 1000);
     }
 
     onSend = (value) =>{
@@ -254,17 +326,53 @@ class PlayTable extends Component {
         playHubProxy.invoke('gameChat', userId, value);
     }
 
-    onPlay = ()=>{
-        clearInterval(this.timer);
-        localStorage.setItem('isPlay', 'false');
-        localStorage.setItem('timer', false);
+    playOffer = () =>{
+        playHubProxy.invoke('playOffer', userId);
+    }
+
+    onFold = () =>{
+        console.log('fold');
+    }
+
+    onCheck = () =>{
+        var difference = this.state.enemyBet - this.state.bet;
+        this.onCreateDibHandler(difference);
         this.setState({
-            time: 20,
-            timer: false
+            isBet: false,
+            firstBet: false
         });
-        localStorage.setItem('time', 20);
-        playHubProxy.invoke('playOffer');
-        //this.props.onPlayHandler();
+        localStorage.setItem('firstBet', 'false');
+        localStorage.setItem('isbet', 'false');
+        this.playOffer();
+        this.props.onPlayWithUserHandler();
+    }
+
+    onRaise = () =>{
+        localStorage.setItem('betCount', this.state.betCount - 1);
+        this.setState({
+            enableBet: false,
+            isFold: false,
+            isCheck: false,
+            isRaise: false,
+            betCount: this.state.betCount - 1
+        });
+        localStorage.setItem('enableBet', 'false');
+        this.playOffer();
+    }
+
+    onMore = () =>{
+        console.log('more');
+        this.props.onMoreWithUserHandler();
+    }
+
+    onEnough = () =>{
+        console.log('enough');
+        this.props.onEnoughWithUserHandler();
+        this.setState({
+            enableBet: false
+        });
+        this.playOffer();
+        console.log(localStorage.getItem('enableBet'));
     }
 
     endGame = () =>{
@@ -272,11 +380,13 @@ class PlayTable extends Component {
             playHubProxy.invoke('stopGame', userId);
         }
     }
-        
+
     render(){
         if(this.state.isLogout){
             return (<Redirect to='/' />)
         }
+        /*console.log('isBet ' + this.state.isBet);
+        console.log('enableBet ' + this.state.enableBet);*/
         return(
             <div className={classes.PlayTable}>
             <div className={classes.Container}>
@@ -305,12 +415,13 @@ class PlayTable extends Component {
                         dealerHandSum={this.props.dealerHandSum}
                     /> :
                     <EnemyHand 
-                        enemyHand={2}//----------------------------------------------enemy cards
+                        enemyHand={0}//----------------------------------------------enemy cards
                     />
                 }
                 <div id="dibsBet"></div>
                 <div id="enemyDibsBet"></div>
                 <Timer
+                    enableBet={this.state.enableBet}
                     timer={this.state.timer}
                     time={this.state.time}
                 />
@@ -322,14 +433,34 @@ class PlayTable extends Component {
                     dibs={this.props.dibs}
                     onDibCLick={this.onCreateDibHandler}
                 />
-                <PlayButton 
-                    onPlay={enemyId != -1 ? this.onPlay : this.props.onPlayHandler}
-                    onEnough={this.props.onEnoughHandler}
-                    onMore={this.props.onMoreHandler}
-                    disabledPlay={!(localStorage.getItem('isPlay') == 'true')}
-                    disabledEnough={!this.props.isEnough}
-                    disabledMore={!this.props.isMore}
-                />
+                {this.state.isBet && enemyId != -1 ?
+                    <BetButton 
+                        onFold={this.onFold}
+                        onCheck={this.onCheck}
+                        onRaise={this.onRaise}
+                        disabledFold={!this.state.isFold}
+                        disabledCheck={!this.state.isCheck}
+                        disabledRaise={!this.state.isRaise}
+                    /> :
+                    enemyId != -1 ?
+                    <PlayButton
+                        onEnough={this.onEnough}
+                        onMore={this.onMore}
+                        disabledEnough={!this.state.enableBet}
+                        disabledMore={!this.state.enableBet}
+                        /*disabledEnough={!this.props.isEnough}
+                        disabledMore={!this.props.isMore}*/
+                    /> :
+                    <PlayButton
+                        onPlay={this.props.onPlayHandler}
+                        onEnough={this.props.onEnoughHandler}
+                        onMore={this.props.onMoreHandler}
+                        disabledPlay={!this.props.isPlay}
+                        disabledEnough={!this.props.isEnough}
+                        disabledMore={!this.props.isMore}
+                    />
+                }
+
                 {enemyId != -1 ?
                     <Chat
                         UserName={this.props.nameUser}
@@ -380,7 +511,10 @@ function mapDispatchToProps(dispatch){
         getDataUser: userId => dispatch(getDataUser(userId)),
         onPlayHandler: () => dispatch(onPlayHandler()),
         onEnoughHandler: () => dispatch(onEnoughHandler()),
-        onMoreHandler: () => dispatch(onMoreHandler())
+        onMoreHandler: () => dispatch(onMoreHandler()),
+        onPlayWithUserHandler: () => dispatch(onPlayWithUserHandler()),
+        onMoreWithUserHandler: () => dispatch(onMoreWithUserHandler()),
+        onEnoughWithUserHandler: () => dispatch(onEnoughWithUserHandler())
     }
 }
 

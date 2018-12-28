@@ -6,7 +6,8 @@ import {FETCH_PLAY_START,
         DRAW_GAME,
         DEAL_HAND,
         PLAY_HAND,
-        DATA_USER} from './actionType'
+        DATA_USER,
+        ENOUGH_HAND} from './actionType'
 // import socketIOClient from "socket.io-client"
 import axios from 'axios'
 
@@ -37,7 +38,7 @@ export function getDataUser(userId){
         }
         let isPlay = parseInt(localStorage.getItem('bet')) > 0;
         let setStateUser;
-        if(localStorage.getItem('playerHand') == ""){
+        if(localStorage.getItem('playerHand') == ''){
             setStateUser = {
                 bet: parseInt(localStorage.getItem('bet')),
                 cash: parseInt(localStorage.getItem('cash')),
@@ -58,6 +59,56 @@ export function getDataUser(userId){
         dispatch(dataUser(setStateUser));
     }
        
+}
+
+export function onPlayWithUserHandler (){
+    return async (dispatch, getState) => {
+        const state = getState().playTable;
+        let playerHand = await [getCard(state), getCard(state)];
+        let playerHandSum = await getSum(playerHand);
+        
+        localStorage.setItem('playerHand', JSON.stringify(playerHand));
+        localStorage.setItem('playerHandSum', playerHandSum);
+
+        const set_state = {
+            playerHand,
+            playerHandSum,
+            isPlay: false,
+            isEnough: true,
+            isMore: true
+        };
+
+        dispatch(handSuccess(set_state));
+    }
+}
+
+export function onMoreWithUserHandler(){
+    return async (dispatch, getState) =>{
+        const state = getState().playTable;
+        let playerHand = state.playerHand;
+        playerHand.push(getCard(state));
+        let playerHandSum = await getSum(playerHand);
+        const play_setState = {
+            playerHand,
+            playerHandSum
+        }
+        localStorage.setItem('playerHand', JSON.stringify(playerHand));
+        localStorage.setItem('playerHandSum', playerHandSum);
+        dispatch(playHand(play_setState));
+    }
+}
+
+export function onEnoughWithUserHandler(){
+    return async (dispatch, getState) => {
+        const state = getState().playTable;
+        const set_state = {
+            isPlay: false,
+            isEnough: false,
+            isMore: false
+        };
+
+        dispatch(enoughHand(set_state));
+    }
 }
 
 export function onPlayHandler (){
@@ -218,8 +269,7 @@ export function onEnoughHandler(){
                 updateData(cash);
                 dispatch(loseGame(lose_setState));
             }, 600);
-        }
-        
+        }        
     }
 }
 
@@ -273,8 +323,7 @@ export function onMoreHandler(){
                 };
                 updateData(cash);
                 dispatch(loseGame(lose_setState));  
-            }, 600);
-            
+            }, 600);            
         } 
     }
 }
@@ -282,6 +331,13 @@ export function onMoreHandler(){
 export function handSuccess(set_state){
     return{
         type: HAND_SUCCESS,
+        ...set_state
+    }
+}
+
+export function enoughHand(set_state){
+    return{
+        type: ENOUGH_HAND,
         ...set_state
     }
 }
@@ -335,7 +391,7 @@ export function fetchPlayStart(){
 }
 
 function getRandomInt(min, max) {
-    return Math.floor(Math.random()*(max-min+1)+min);
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 function getCard(state){

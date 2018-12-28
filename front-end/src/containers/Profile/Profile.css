@@ -29,14 +29,3 @@
 .Buttons{
     text-align: center;
 }
-
-.UsersList > div{
-    line-height: 36px;
-    vertical-align: middle;
-    margin-bottom: 10px;
-}
-
-.UsersList button{
-    float: right;
-    overflow: auto;
-}

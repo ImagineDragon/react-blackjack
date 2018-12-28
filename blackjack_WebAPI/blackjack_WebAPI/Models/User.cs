@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Web;
 
 namespace blackjack_WebAPI.Models
@@ -62,6 +63,7 @@ namespace blackjack_WebAPI.Models
         public HubProfile user1 { get; set; }
         public HubProfile user2 { get; set; }
         public List<Message> messages { get; set; }
+        public Timer timer { get; set; }
     }
 
     public class Message

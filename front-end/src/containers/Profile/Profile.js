@@ -4,11 +4,11 @@ import {NavLink, Redirect} from 'react-router-dom'
 import Button from '../../components/UI/Button/Button'
 import axios from 'axios';
 
+import Users from '../../components/UI/UsersList/UsersList'
+
 //import $ from 'jquery';
 import StartConnection, {connection, playHubProxy} from '../../Hubs/Hubs'
 //import { hubConnection } from 'signalr-no-jquery';
-
-var renderOutput = [];
 
 var setCount = 0;
 
@@ -19,57 +19,17 @@ class Profile extends Component{
         name: '',
         email: '',
         count: 0,
-        ready: false
-    }
-
-    UsersList = (props) =>{
-        renderOutput = [];
-        for( var i = 0; i < props.length; i++ ){
-            if(props[i].id === localStorage.getItem('userId')){
-                renderOutput.push(<div key = {props[i].id} > <b>{props[i].name}</b> </div>);
-            } else {
-                renderOutput.push(
-                    <div key = {props[i].id} > 
-                        {props[i].name} 
-                        {props[i].ready ? <Button type='success' id={props[i].id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
-                    </div>);
-            }
-        }
-    }
-    NewUser = (props) =>{
-        renderOutput.push(
-            <div key = {props.id} > 
-                {props.name} 
-                {props.ready ? <Button type='success' id={props.id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
-            </div>);
-    }
-    UserDisconnect = (props) =>{
-        for( var i = 0; i < renderOutput.length; i++){ 
-            if ( renderOutput[i].key === props.id ) {
-                renderOutput.splice(i, 1); 
-            }
-        }
-    }
-    UserReady = (props) =>{
-        for( var i = 0; i < renderOutput.length; i++){ 
-            if ( renderOutput[i].key === props.id ) {
-                renderOutput[i] = 
-                    <div key = {props.id} > 
-                        {props.name} 
-                        {props.ready ? <Button type='success' id={props.id} onClick={this.acceptGame.bind(this)}>Играть</Button> : null}
-                    </div>; 
-            }
-        }
+        ready: false,
+        users: []
     }
 
     isLogout = () => {
         localStorage.removeItem('userId');
-        localStorage.removeItem('enemyId');
         this.setState({
             isLogout: true
-        });        
-        console.log('Disconnected');
+        });
         connection.stop();
+        console.log('stop');
     }
 
     componentDidMount(){
@@ -89,43 +49,63 @@ class Profile extends Component{
         const userId = localStorage.getItem('userId');
         this.getDataUser(userId);
 
-        function sss(){
+        playHubProxy.on('onConnected', function(profiles){
+            console.log('Connected');
+            setCount = profiles.length;
             this.setState({
+                users: profiles,
                 count: setCount
             });
-        };
-        sss = sss.bind(this);
-
-        playHubProxy.on('onConnected', function(profiles){
-            console.log('Connected')
-            this.UsersList(profiles);
-            setCount = profiles.length;
-            sss();
         }.bind(this));
 
         playHubProxy.on('onNewUserConnected', function(newUser){
             console.log('New user')
-            setCount++;
-            this.NewUser(newUser);
-            sss();
+            var users = this.state.users;
+            var index = users.indexOf(newUser);
+            if(index == -1){
+                users.push(newUser);
+                setCount++;
+            }
+            this.setState({
+                users: users,
+                count: setCount
+            });
         }.bind(this));
+
         playHubProxy.on('onUserDisconnected', function(profile){
             if(connection != null){
                 console.log('User disconnected')
                 setCount--;
-                this.UserDisconnect(profile);
-                sss();
+                var users = this.state.users;
+                for(var i = 0; i < users.length; i++){
+                    if(users[i].id === profile.id){
+                        users.splice(i, 1);
+                        break;
+                    }
+                }     
+                this.setState({
+                    users: users,
+                    count: setCount
+                });
             }
         }.bind(this));
+
         if(connection.state === 4){
             StartConnection(userId);
-        } else {
-            sss();
         }
 
         playHubProxy.on('onUserReady', function(profile){
-            this.UserReady(profile);
-            sss()
+            var users = this.state.users;
+            for(var i = 0; i < users.length; i++){
+                if(users[i].id === profile.id){
+                    users[i] = profile;
+                    break;
+                }
+            }
+            this.setState({
+                users: users,
+                count: setCount
+            });
         }.bind(this));
 
         playHubProxy.on('onGameAccept', function(profile){
@@ -212,12 +192,11 @@ class Profile extends Component{
                             >Выход</Button>
                         </div>
                         <hr />
-                        <div>
-                            Users online: {this.state.count}
-                            <div className={classes.UsersList}>                                
-                                {renderOutput}
-                            </div>
-                        </div>                         
+                        <Users
+                            Count={this.state.count}
+                            onClick={this.acceptGame}
+                            Users={this.state.users}
+                        />
                     </div>
                 </div>
             )   

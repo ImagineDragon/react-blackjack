@@ -1,0 +1,29 @@
+.BetButton{
+    position: absolute;
+    bottom: 30px;
+    width: 90px;
+    max-width: 20%;
+    left: 50%;
+    margin-left: -45px;
+}
+
+.btn{
+	font-size: 1.25em;
+	background-color: #E9C85F;
+	border: none;
+    color: #000; 
+    border-radius: 5px;
+    padding: 10px;
+    font-weight: bold;
+    width: 90px;
+    margin-bottom: 2px;
+}
+	.btn:hover{
+		background-color: #000;
+		color: #fff;
+        border: none; 
+        cursor: pointer;
+    }
+    .btn:disabled{
+        cursor: not-allowed;
+    }

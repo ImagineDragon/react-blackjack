@@ -6,7 +6,8 @@ import {FETCH_PLAY_START,
         DRAW_GAME,
         DEAL_HAND,
         PLAY_HAND,
-        DATA_USER} from '../actions/actionType'
+        DATA_USER,
+        ENOUGH_HAND} from '../actions/actionType'
 
 const initialState = {
     deck: [
@@ -357,6 +358,13 @@ export default function playReducer(state = initialState, action){
                 bet: action.bet, 
                 cash: action.cash,
                 isPlay: action.isPlay
+            }
+        case ENOUGH_HAND:
+            return{
+                ...state,
+                isPlay: action.isPlay,
+                isEnough: action.isEnough,
+                isMore: action.isMore
             }
         case HAND_SUCCESS:
             return{

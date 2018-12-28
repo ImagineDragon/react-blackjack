@@ -5,7 +5,8 @@ const Timer = props =>{
     if(props.timer){
         return(
             <div className={classes.Timer}>
-                Time to bet {props.time}
+                {props.enableBet ? <span>Time to bet </span> : <span>Enemy time </span>}
+                {props.time}
             </div>
         )
     } else {

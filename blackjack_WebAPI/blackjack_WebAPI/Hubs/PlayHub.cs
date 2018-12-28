@@ -7,6 +7,7 @@ using blackjack_WebAPI.Models;
 using System.Threading.Tasks;
 using System.Web.Http.Cors;
 using Microsoft.AspNet.SignalR.Hubs;
+using System.Threading;
 
 namespace blackjack_WebAPI.Hubs
 {
@@ -16,6 +17,8 @@ namespace blackjack_WebAPI.Hubs
         static List<HubProfile> Profiles = new List<HubProfile>();
 
         static List<Game> PlayProfiles = new List<Game>();
+
+        int time = 20;
 
         UserContext db = new UserContext();
 
@@ -82,7 +85,12 @@ namespace blackjack_WebAPI.Hubs
             HubProfile enemy;
 
             int index = PlayProfiles.FindIndex(u => u.user1.id.ToString() == userId || u.user2.id.ToString() == userId);
-            if(PlayProfiles[index].user1.id == userId)
+            if (index == -1)
+            {
+                Clients.Caller.OnStopGame();
+                return;
+            }
+            if (PlayProfiles[index].user1.id == userId)
             {
                 PlayProfiles[index].user1.connectionId = Context.ConnectionId;
 
@@ -96,7 +104,7 @@ namespace blackjack_WebAPI.Hubs
                 enemy = PlayProfiles[index].user1;
             }
 
-            Clients.Caller.onGameStart(user, enemy, PlayProfiles[index].messages);
+            Clients.Caller.onGameStart(user, enemy, PlayProfiles[index].messages, PlayProfiles[index].user1.id);
         }
 
         public void GameChat(string userId, string message)
@@ -145,38 +153,63 @@ namespace blackjack_WebAPI.Hubs
             Clients.Client(enemy.connectionId).onEnemyBet(user, dibsBet);
         }
 
-        public void PlayOffer()
+        public void PlayOffer(string userId)
         {
-            int index = PlayProfiles.FindIndex(u => u.user1.connectionId.ToString() == Context.ConnectionId || u.user2.connectionId.ToString() == Context.ConnectionId);
-            if (PlayProfiles[index].user1.connectionId == Context.ConnectionId)
+            int index = PlayProfiles.FindIndex(u => u.user1.id == userId || u.user2.id == userId);
+
+            if (PlayProfiles[index].user1.id == userId)
             {
-                Clients.Client(PlayProfiles[index].user2.connectionId).onPlayOffer();
+                Clients.Client(PlayProfiles[index].user2.connectionId).onPlayOffer(userId);
             }
             else
             {
-                Clients.Client(PlayProfiles[index].user1.connectionId).onPlayOffer();
+                Clients.Client(PlayProfiles[index].user1.connectionId).onPlayOffer(userId);
             }
+
+            if(PlayProfiles[index].timer != null) PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+            time = 20;
+            TimerCallback tm = new TimerCallback(Tick);
+            PlayProfiles[index].timer = new Timer(tm, userId, 0, 1000);
         }
+
+        public void Tick(object obj)
+        {
+            int index = PlayProfiles.FindIndex(u => u.user1.id == (string)obj || u.user2.id == (string)obj);
+
+            if (index == -1) return;
+
+            if (time >= 0)
+            {
+                Clients.Client(PlayProfiles[index].user1.connectionId).onTimer(time);
+                Clients.Client(PlayProfiles[index].user2.connectionId).onTimer(time);
+            }
+            else
+            {
+                StopGame((string)obj);
+            }
+
+            time--;
+        }
+
+
 
         public void StopGame(string userId)
         {
-            Game game = PlayProfiles.FirstOrDefault(x => x.user1.id == userId || x.user2.id == userId);
-            if (game == null) return;
-            if (game.user1.id == userId)
-            {
-                Clients.Client(game.user2.connectionId).onStopGame();
-            }
-            else
-            {
-                Clients.Client(game.user1.connectionId).onStopGame();
-            }
+            int index = PlayProfiles.FindIndex(x => x.user1.id == userId || x.user2.id == userId);
+            if (index == -1) return;
+            Game game = PlayProfiles[index];
 
+            Clients.Client(game.user1.connectionId).onStopGame();
+            Clients.Client(game.user2.connectionId).onStopGame();
+
+            PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
             PlayProfiles.Remove(game);
         }
 
         public override Task OnDisconnected(bool stopCalled)
         {
-            System.Threading.Thread.Sleep(1000);
+            Thread.Sleep(1000);
 
             var profile = Profiles.FirstOrDefault(u => u.connectionId == Context.ConnectionId);
             if (profile != null)
