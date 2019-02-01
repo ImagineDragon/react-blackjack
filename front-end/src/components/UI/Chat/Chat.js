@@ -1,5 +1,8 @@
 import React, {Component} from 'react'
 import classes from './Chat.css'
+import {connect} from 'react-redux'
+
+import {onMessage} from '../../../store/actions/playTable'
 
 class Chat extends Component{
     state ={
@@ -15,15 +18,14 @@ class Chat extends Component{
         this.setState({ message: e.target.value });
     }
   
-    keyPress = (e) =>{
+    keyPress = async (e) =>{
         if(e.key === 'Enter' && this.state.message !== '' && this.state.message.match(/^ *$/) === null){
             this.props.onSend(this.state.message);
+            await this.props.onMessage({userName: this.props.UserName, message: this.state.message});
             this.setState({
                 message: ''
             });
-            setTimeout(() => {
-                scrollDown();
-            }, 1);
+            scrollDown();
         }
     }
 
@@ -45,7 +47,7 @@ class Chat extends Component{
                 <div id='messages' className={classes.Message}>
                     {this.props.Messages.map((message, id) =>{
                         return(
-                            <p key={id}>{message.userName == this.props.UserName ? <b>{message.userName}:</b> : <span>{message.userName}:</span>} {message.message}</p>
+                            <p key={id}>{message.userName === this.props.UserName ? <b>{message.userName}:</b> : <span>{message.userName}:</span>} {message.message}</p>
                         )
                     })}
                 </div>                
@@ -60,4 +62,10 @@ export function scrollDown(){
     el.scrollTop = el.scrollHeight;
 }
 
-export default Chat
+function mapDispatchToProps(dispatch){
+    return{
+        onMessage: (message) => dispatch(onMessage(message))
+    }
+}
+
+export default connect(null, mapDispatchToProps)(Chat)

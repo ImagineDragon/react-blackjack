@@ -6,11 +6,108 @@ import {FETCH_PLAY_START,
         DRAW_GAME,
         DEAL_HAND,
         PLAY_HAND,
+        USER_PROFILE,
         DATA_USER,
-        ENOUGH_HAND} from './actionType'
-// import socketIOClient from "socket.io-client"
+        ENOUGH_HAND,
+        USER_CONNECT,
+        NEW_USER_CONNECT,
+        USER_DISCONNECT,
+        USER_READY,
+        GAME_START,
+        ACTIVE_PLAYER,
+        NEW_MESSAGE,
+        TIMER,
+        BET,
+        ENEMY_BET,
+        USER_DIBS_BET,
+        ENEMY_DIBS_BET,
+        DELETE_DIBS} from './actionType'
 import axios from 'axios'
 
+export function onConnected(profiles){
+    return {
+        type: USER_CONNECT,
+        profiles
+    }
+}
+
+export function onNewUserConnected(newUser){
+    return {
+        type: NEW_USER_CONNECT,
+        newUser
+    }
+}
+
+export function onUserDisconnected(profile){
+    return {
+        type: USER_DISCONNECT,
+        profile
+    }
+}
+
+export function onUserReady(profile){
+    return {
+        type: USER_READY,
+        profile
+    }
+}
+
+export function onGameStart(user, enemy, messages){
+    return {
+        type: GAME_START,
+        user, enemy, messages
+    }
+}
+
+export function setActivePlayer(id, isBet = true){
+    console.log(isBet);
+    return {
+        type: ACTIVE_PLAYER,
+        id, isBet
+    }
+}
+
+export function onBet(user){
+    return {
+        type: BET,
+        user
+    }
+}
+
+export function onEnemyBet(enemy){
+    return {
+        type: ENEMY_BET,
+        enemy
+    }
+}
+
+export function userDibsBet(dibsBet){
+    return {
+        type: USER_DIBS_BET,
+        dibsBet
+    }
+}
+
+export function enemyDibsBet(dibsBet){
+    return {
+        type: ENEMY_DIBS_BET,
+        dibsBet
+    }
+}
+
+export function onMessage(message){
+    return {
+        type: NEW_MESSAGE,
+        message
+    }
+}
+
+export function onTimer(time){
+    return {
+        type: TIMER,
+        time
+    }
+}
 
 export function fetchMakeBet(bet, cash, isPlay){
     return {
@@ -19,43 +116,42 @@ export function fetchMakeBet(bet, cash, isPlay){
     }
 }
 
+export function getUserProfile(userId){
+    return async dispatch =>{
+        const data = {
+            userId: userId  
+        }
+        let setStateUser;
+        const respons = await axios.post('http://localhost:3001/profile', data);
+        if(respons.data){
+            setStateUser = {
+                id: respons.data.id,
+                cash: respons.data.bet,
+                name: respons.data.name,
+                email: respons.data.email
+            }
+        }
+
+        dispatch(userProfile(setStateUser));
+    }
+}
+
 export function getDataUser(userId){
     return async dispatch =>{
         const data = {
             userId: userId  
         }
-        if(localStorage.getItem('cash') == null){
-            const respons = await axios.post('http://localhost:3001/play', data);
-            if(respons.data){                
-                localStorage.setItem('cash', respons.data.bet);
-                localStorage.setItem('bet', 0);
-                localStorage.setItem('name', respons.data.name);
-                localStorage.setItem('playerHand', '');
-                localStorage.setItem('dealerHand', '');
-                localStorage.setItem('playerHandSum', 0);
-                localStorage.setItem('dealerHandSum', 0);
-            }
-        }
-        let isPlay = parseInt(localStorage.getItem('bet')) > 0;
         let setStateUser;
-        if(localStorage.getItem('playerHand') == ''){
+        const respons = await axios.post('http://localhost:3001/play', data);
+        if(respons.data){
             setStateUser = {
-                bet: parseInt(localStorage.getItem('bet')),
-                cash: parseInt(localStorage.getItem('cash')),
-                name: localStorage.getItem('name'),
-                isPlay: isPlay
-            }
-        } else{
-            setStateUser = {
-                playerHand: JSON.parse(localStorage.getItem('playerHand')),
-                dealerHand: JSON.parse(localStorage.getItem('dealerHand')),
-                playerHandSum: parseInt(localStorage.getItem('playerHandSum')),
-                dealerHandSum: parseInt(localStorage.getItem('dealerHandSum')),
-                bet: parseInt(localStorage.getItem('bet')),
-                cash: parseInt(localStorage.getItem('cash')),
-                name: localStorage.getItem('name')
+                bet: 0,
+                cash: respons.data.bet,
+                name: respons.data.name,
+                isPlay: true
             }
         }
+        
         dispatch(dataUser(setStateUser));
     }
        
@@ -66,13 +162,13 @@ export function onPlayWithUserHandler (){
         const state = getState().playTable;
         let playerHand = await [getCard(state), getCard(state)];
         let playerHandSum = await getSum(playerHand);
-        
-        localStorage.setItem('playerHand', JSON.stringify(playerHand));
-        localStorage.setItem('playerHandSum', playerHandSum);
 
         const set_state = {
             playerHand,
             playerHandSum,
+            enemyHand: [],
+            enemyHandSum: 0,
+            isBet: false,
             isPlay: false,
             isEnough: true,
             isMore: true
@@ -85,22 +181,19 @@ export function onPlayWithUserHandler (){
 export function onMoreWithUserHandler(){
     return async (dispatch, getState) =>{
         const state = getState().playTable;
-        let playerHand = state.playerHand;
+        let playerHand = state.user.playerHand;
         playerHand.push(getCard(state));
         let playerHandSum = await getSum(playerHand);
         const play_setState = {
             playerHand,
             playerHandSum
         }
-        localStorage.setItem('playerHand', JSON.stringify(playerHand));
-        localStorage.setItem('playerHandSum', playerHandSum);
         dispatch(playHand(play_setState));
     }
 }
 
 export function onEnoughWithUserHandler(){
     return async (dispatch, getState) => {
-        const state = getState().playTable;
         const set_state = {
             isPlay: false,
             isEnough: false,
@@ -115,20 +208,16 @@ export function onPlayHandler (){
     return async (dispatch, getState) => {
         const state = getState().playTable;
         let playerHand = await [getCard(state), getCard(state)];
-        let dealerHand = await [getCard(state)];
+        let enemyHand = await [getCard(state)];
         let playerHandSum = await getSum(playerHand);
-        let dealerHandSum = await getSum(dealerHand);
-        
-        localStorage.setItem('playerHand', JSON.stringify(playerHand));
-        localStorage.setItem('dealerHand', JSON.stringify(dealerHand));
-        localStorage.setItem('playerHandSum', playerHandSum);
-        localStorage.setItem('dealerHandSum', dealerHandSum);
+        let enemyHandSum = await getSum(enemyHand);
 
         const set_state = {
             playerHand,
             playerHandSum,
-            dealerHand,
-            dealerHandSum,
+            enemyHand,
+            enemyHandSum,
+            isBet: true,
             isPlay: false,
             isEnough: true,
             isMore: true
@@ -138,34 +227,34 @@ export function onPlayHandler (){
 
         if(playerHandSum === 21){ 
             setTimeout(()=>{
-                let cash = state.cash + state.bet*2;
+                let cash = state.user.cash + state.user.bet * 2;
                 const win_setState = {
                     playerHandSum: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     bet: 0,
                     cash,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 };
                 updateData(cash);
                 dispatch(winGame(win_setState)); 
-                onDeletDib();  
+                dispatch(onDeletDib());  
                 alert('У Вас BlackJack!!!!!!!!!!!!!'); 
             }, 600);           
             
         }else if(playerHandSum > 21){
             setTimeout(()=>{
-                let cash = state.cash;
+                let cash = state.user.cash;
                 alert('Вы проиграли!!!!!!!');
-                onDeletDib();
+                dispatch(onDeletDib());
                 const lose_setState = {
                     playerHandSum: 0,
                     bet: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 };
@@ -180,89 +269,89 @@ export function onPlayHandler (){
 export function onEnoughHandler(){
     return async (dispatch, getState) => {
         const state = getState().playTable;
-        let dealerHand = state.dealerHand;
-        await dealerHand.push(getCard(state));
-        let dealerHandSum = await getSum(dealerHand);
+        let enemyHand = state.user.enemyHand;
+        await enemyHand.push(getCard(state));
+        let enemyHandSum = await getSum(enemyHand);
         const deal_setState_first = {
-            dealerHand,
-            dealerHandSum
+            enemyHand,
+            enemyHandSum
         }
         await dispatch(dealHand(deal_setState_first));
         
-        while(dealerHandSum < 17){
-            await dealerHand.push(getCard(state));
-            dealerHandSum = await getSum(dealerHand);
+        while(enemyHandSum < 17){
+            await enemyHand.push(getCard(state));
+            enemyHandSum = await getSum(enemyHand);
             const deal_setState = {
-                dealerHand,
-                dealerHandSum
+                enemyHand,
+                enemyHandSum
             }
             await dispatch(dealHand(deal_setState));
         }
 
-        if(dealerHandSum === 21){
+        if(enemyHandSum === 21){
             setTimeout(()=>{
-                let cash = state.cash;
+                let cash = state.user.cash;
                 const lose_setState = {
                     playerHandSum: 0,
                     bet: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 }; 
                 dispatch(loseGame(lose_setState));
-                onDeletDib(); 
+                dispatch(onDeletDib()); 
                 updateData(cash); 
                 alert('У дилера BlackJack! Вы проиграли((((('); 
             }, 600); 
-        }else if(dealerHandSum > 21 || state.playerHandSum > dealerHandSum){
+        }else if(enemyHandSum > 21 || state.user.playerHandSum > enemyHandSum){
             setTimeout(()=>{
-                let cash = state.cash + state.bet*2;
+                let cash = state.user.cash + state.user.bet * 2;
                 const win_setState = {
                     playerHandSum: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     bet: 0,
                     cash,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 }; 
                 dispatch(winGame(win_setState));
-                onDeletDib();  
+                dispatch(onDeletDib());  
                 updateData(cash);
                 alert('Вы выграли!!!!!!!!!!!!!'); 
             }, 600);        
-        }else if(dealerHandSum === state.playerHandSum){
+        }else if(enemyHandSum === state.user.playerHandSum){
             setTimeout(()=>{
-                let cash = state.cash + state.bet;
+                let cash = state.user.cash + state.user.bet;
                 const draw_setState = {
                     playerHandSum: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     bet: 0,
                     cash,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 }; 
                 dispatch(drawGame(draw_setState));
-                onDeletDib();  
+                dispatch(onDeletDib());  
                 updateData(cash);
                 alert('Победила дружба!!!!!!!!!!!!!'); 
             }, 600); 
         }else{
             setTimeout(()=>{
-                let cash = state.cash;
+                let cash = state.user.cash;
                 alert('Вы проиграли!!!!!!!');
-                onDeletDib();
+                dispatch(onDeletDib());
                 const lose_setState = {
                     playerHandSum: 0,
                     bet: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 };
@@ -276,48 +365,46 @@ export function onEnoughHandler(){
 export function onMoreHandler(){
     return async (dispatch, getState) =>{
         const state = getState().playTable;
-        let playerHand = state.playerHand;
+        let playerHand = state.user.playerHand;
         playerHand.push(getCard(state));
         let playerHandSum = await getSum(playerHand);
         const play_setState = {
             playerHand,
             playerHandSum
         }
-        localStorage.setItem('playerHand', JSON.stringify(playerHand));
-        localStorage.setItem('playerHandSum', playerHandSum);
         dispatch(playHand(play_setState));
 
 
         if(playerHandSum === 21){ 
             setTimeout(()=>{
-                let cash = state.cash + state.bet*2;
+                let cash = state.user.cash + state.user.bet * 2;
                 const win_setState = {
                     playerHandSum: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     bet: 0,
                     cash,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 };
                 dispatch(winGame(win_setState));
-                onDeletDib();  
+                dispatch(onDeletDib());
                 updateData(cash);
                 alert('У Вас BlackJack!!!!!!!!!!!!!'); 
             }, 600);           
             
         }else if(playerHandSum > 21){
             setTimeout(()=>{
-                let cash = state.cash
+                let cash = state.user.cash
                 alert('Вы проиграли!!!!!!!');
-                onDeletDib();
+                dispatch(onDeletDib());
                 const lose_setState = {
                     playerHandSum: 0,
                     bet: 0,
-                    dealerHandSum: 0,
+                    enemyHandSum: 0,
                     playerHand:[],
-                    dealerHand:[],
+                    enemyHand:[],
                     isEnough: false,
                     isMore: false
                 };
@@ -339,6 +426,13 @@ export function enoughHand(set_state){
     return{
         type: ENOUGH_HAND,
         ...set_state
+    }
+}
+
+export function userProfile(setStateUser){
+    return{
+        type: USER_PROFILE,
+        ...setStateUser
     }
 }
 
@@ -422,23 +516,18 @@ function getSum (hand){
     return sum;
 }
 
-function onDeletDib() {
-    return document.getElementById('dibsBet').innerHTML='';
+export function onDeletDib() {
+    return{
+        type: DELETE_DIBS
+    }
 }
 
 
 async function updateData(cash){
-    localStorage.setItem('cash', cash);
-    localStorage.setItem('bet', 0);
-    localStorage.removeItem('dibsBet');
-    localStorage.setItem('playerHand', '');
-    localStorage.setItem('dealerHand', '');
-    localStorage.setItem('playerHandSum', 0);
-    localStorage.setItem('dealerHandSum', 0);
-    const userUpdate = localStorage.getItem('userId');
-    const dataUpdate ={
-        userUpdate, cash
-    }
+    //const userUpdate = localStorage.getItem('userId');
+    // const dataUpdate ={
+    //     userUpdate, cash
+    // }
     //await axios.put('http://localhost:3001/playUser', dataUpdate);
     // if(respons.data){
     //     const setStateUser = {

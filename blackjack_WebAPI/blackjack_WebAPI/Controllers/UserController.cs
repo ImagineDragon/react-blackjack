@@ -72,14 +72,14 @@ namespace blackjack_WebAPI.Controllers
         [HttpPost]
         public ProfilePost Profile(ProfileGet id)
         {
-            User user = db.Users.FirstOrDefault(u => u.Id.ToString() == id.userId);
+            User user = db.Users.FirstOrDefault(u => u.Id == id.userId);
 
             if (user == null)
             {
                 return null;
             }
 
-            ProfilePost profile = new ProfilePost { Id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
+            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
 
             return profile;
         }
@@ -87,14 +87,14 @@ namespace blackjack_WebAPI.Controllers
         [HttpPost]
         public ProfilePost Play(ProfileGet id)
         {
-            User user = db.Users.FirstOrDefault(u => u.Id.ToString() == id.userId);
+            User user = db.Users.FirstOrDefault(u => u.Id == id.userId);
 
             if (user == null)
             {
                 return null;
             }
 
-            ProfilePost profile = new ProfilePost { Id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
+            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
 
             return profile;
         }

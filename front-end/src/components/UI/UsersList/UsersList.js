@@ -8,7 +8,7 @@ const Users = props =>{
             Users online: {props.Count}
             <div className={classes.UsersList}>                                
                 {props.Users.map((user) =>{
-                        if(user.id === localStorage.getItem('userId')){
+                        if(user.id === parseInt(localStorage.getItem('userId'))){
                             return(<div key = {user.id} > <b>{user.name}</b> </div>);
                         } else {
                             return(

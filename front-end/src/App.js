@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import {Route, Switch} from 'react-router-dom'
+import {Router, Route} from 'react-router-dom'
+import {history} from './store/history'
 import Auth from './containers/Auth/Auth'
 import Registration from './containers/Registration/Registration'
 import Profile from './containers/Profile/Profile'
@@ -17,15 +18,16 @@ class App extends Component {
   //   })
   // }
   render() {
-   
     // if(this.state.userId){
       return (
-        <Switch>          
-          <Route path="/registration" component={Registration} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/play" component={PlayTable} />
-          <Route path="/" exact component={Auth} />
-        </Switch>
+        <Router history={history}>
+          <div>
+            <Route path="/registration" component={Registration} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/play" component={PlayTable} />
+            <Route path="/" exact component={Auth} />
+          </div>
+        </Router>
       ); 
     // }else{
     //   return (

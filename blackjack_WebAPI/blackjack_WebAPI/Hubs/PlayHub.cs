@@ -22,11 +22,11 @@ namespace blackjack_WebAPI.Hubs
 
         UserContext db = new UserContext();
 
-        public void Connect(string userId)
+        public void Connect(int userId)
         {
             if (!Profiles.Any(x => x.id == userId))
             {
-                User user = db.Users.FirstOrDefault(u => u.Id.ToString() == userId);
+                User user = db.Users.FirstOrDefault(u => u.Id == userId);
                 if (user == null) return;
                 HubProfile newUser = new HubProfile { connectionId = Context.ConnectionId, id = userId, name = user.Name, email = user.Email, cash = user.Bet, bet = 0, ready = false };
                 Profiles.Add(newUser);
@@ -74,17 +74,21 @@ namespace blackjack_WebAPI.Hubs
             game.user2 = new HubProfile() { id = enemy.id, name = enemy.name, email = enemy.email, bet = enemy.bet, cash = enemy.cash, connectionId = enemy.connectionId, ready = enemy.ready };
             game.messages = new List<Message>();
 
+            time = 20;
+            TimerCallback tm = new TimerCallback(Tick);
+            game.timer = new Timer(tm, userId, 0, 1000);
+
             PlayProfiles.Add(game);
 
             Clients.Client(enemy.connectionId).onGameAccept(user);
         }
 
-        public void GameStart(string userId)
+        public void GameStart(int userId)
         {
             HubProfile user;
             HubProfile enemy;
 
-            int index = PlayProfiles.FindIndex(u => u.user1.id.ToString() == userId || u.user2.id.ToString() == userId);
+            int index = PlayProfiles.FindIndex(u => u.user1.id == userId || u.user2.id == userId);
             if (index == -1)
             {
                 Clients.Caller.OnStopGame();
@@ -104,10 +108,10 @@ namespace blackjack_WebAPI.Hubs
                 enemy = PlayProfiles[index].user1;
             }
 
-            Clients.Caller.onGameStart(user, enemy, PlayProfiles[index].messages, PlayProfiles[index].user1.id);
+            Clients.Caller.onGameStart(user, enemy, PlayProfiles[index].messages);
         }
 
-        public void GameChat(string userId, string message)
+        public void GameChat(int userId, string message)
         {
             int index = PlayProfiles.FindIndex(x => x.user1.id == userId || x.user2.id == userId);
             HubProfile enemy;
@@ -126,7 +130,7 @@ namespace blackjack_WebAPI.Hubs
             Clients.Client(enemy.connectionId).onMessage(mes);
         }
 
-        public void UserBet(int cash, int bet, string dibsBet)
+        public void UserBet(int cash, int bet, int[] dibsBet)
         {
             HubProfile user;
             HubProfile enemy;
@@ -153,17 +157,17 @@ namespace blackjack_WebAPI.Hubs
             Clients.Client(enemy.connectionId).onEnemyBet(user, dibsBet);
         }
 
-        public void PlayOffer(string userId)
+        public void PlayOffer(int userId, bool isBet)
         {
             int index = PlayProfiles.FindIndex(u => u.user1.id == userId || u.user2.id == userId);
 
             if (PlayProfiles[index].user1.id == userId)
             {
-                Clients.Client(PlayProfiles[index].user2.connectionId).onPlayOffer(userId);
+                Clients.Client(PlayProfiles[index].user2.connectionId).onPlayOffer(isBet);
             }
             else
             {
-                Clients.Client(PlayProfiles[index].user1.connectionId).onPlayOffer(userId);
+                Clients.Client(PlayProfiles[index].user1.connectionId).onPlayOffer(isBet);
             }
 
             if(PlayProfiles[index].timer != null) PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -175,7 +179,7 @@ namespace blackjack_WebAPI.Hubs
 
         public void Tick(object obj)
         {
-            int index = PlayProfiles.FindIndex(u => u.user1.id == (string)obj || u.user2.id == (string)obj);
+            int index = PlayProfiles.FindIndex(u => u.user1.id == Convert.ToInt32(obj) || u.user2.id == Convert.ToInt32(obj));
 
             if (index == -1) return;
 
@@ -186,7 +190,7 @@ namespace blackjack_WebAPI.Hubs
             }
             else
             {
-                StopGame((string)obj);
+                StopGame(Convert.ToInt32(obj));
             }
 
             time--;
@@ -194,7 +198,7 @@ namespace blackjack_WebAPI.Hubs
 
 
 
-        public void StopGame(string userId)
+        public void StopGame(int userId)
         {
             int index = PlayProfiles.FindIndex(x => x.user1.id == userId || x.user2.id == userId);
             if (index == -1) return;
@@ -203,7 +207,10 @@ namespace blackjack_WebAPI.Hubs
             Clients.Client(game.user1.connectionId).onStopGame();
             Clients.Client(game.user2.connectionId).onStopGame();
 
-            PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
+            if (PlayProfiles[index].timer != null)
+            {
+                PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
+            }
             PlayProfiles.Remove(game);
         }
 
