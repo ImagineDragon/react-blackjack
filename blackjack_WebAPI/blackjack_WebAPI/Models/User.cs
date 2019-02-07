@@ -56,6 +56,8 @@ namespace blackjack_WebAPI.Models
         public int cash { get; set; }
         public int bet { get; set; }
         public bool ready { get; set; }
+        public int handSum { get; set; }
+        public dynamic hand { get; set; }
     }
 
     public class Game

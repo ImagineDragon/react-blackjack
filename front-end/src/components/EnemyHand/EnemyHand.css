@@ -8,7 +8,7 @@
 	transform: translate(-50%, -50%)
 }
 
-.EnemyHand > p{
+.EnemyHand > div > p{
 	float: left;
 	width: 23px;
 	height: 20px;

@@ -21,7 +21,35 @@ import {FETCH_PLAY_START,
         NEW_MESSAGE,
         USER_DIBS_BET,
         ENEMY_DIBS_BET,
-        DELETE_DIBS} from '../actions/actionType'
+        DELETE_DIBS,
+        ENEMY_GET_CARD,
+        GAME_RESULT} from '../actions/actionType'
+
+let user = JSON.parse(localStorage.getItem('user')) || {
+    id: -1,        
+    name: '',
+    email: '',
+    bet: 0,
+    cash: 0,
+    playerHand: [],
+    playerHandSum: 0,
+    enoughCards: false,
+    dibsBet: [],
+    enemyName: '',
+    enemyBet: 0,
+    enemyCash: 0,
+    enemyCardsCount: 0,
+    enemyHand: [],
+    enemyHandSum: 0,
+    enemyDibsBet: [],
+    isBet: true,
+    activePlayerId: 0,
+    messages: [],
+    time: -1,
+    isPlay: false,
+    isEnough: false,
+    isMore: false
+}
 
 const initialState = {
     deck: [
@@ -320,29 +348,7 @@ const initialState = {
     ],
     count: 0,
     users: [],
-    user: {
-        id: -1,        
-        name: '',
-        email: '',
-        bet: 0,
-        cash: 0,
-        playerHand: [],
-        playerHandSum: 0,
-        dibsBet: [],
-        enemyName: '',
-        enemyBet: 0,
-        enemyCash: 0,
-        enemyHand: [],
-        enemyHandSum: 0,
-        enemyDibsBet: [],
-        isBet: true,
-        activePlayerId: 0,
-        messages: [],
-        time: -1,
-        isPlay: false,
-        isEnough: false,
-        isMore: false
-    }
+    user
 }
 
 export default function playReducer(state = initialState, action){
@@ -358,12 +364,14 @@ export default function playReducer(state = initialState, action){
                         email: action.email,
                         playerHand: [],
                         playerHandSum: 0,
+                        enoughCards: false,
                         dibsBet: [],
                         enemyName: '',
                         enemyBet: 0,
                         enemyCash: 0,
                         enemyHand: [],
                         enemyHandSum: 0,
+                        enemyCardsCount: 0,
                         enemyDibsBet: [],
                         isBet: true,
                         activePlayerId: 0,
@@ -456,7 +464,9 @@ export default function playReducer(state = initialState, action){
                 user:{
                     ...state.user,
                     dibsBet: [],
-                    enemyDibsBet:[]
+                    enemyDibsBet:[],
+                    enemyCardsCount: 0,
+                    enoughCards: false
                 }
             }
         case NEW_MESSAGE:
@@ -473,6 +483,23 @@ export default function playReducer(state = initialState, action){
                 user:{
                     ...state.user,
                     time: action.time
+                }
+            }
+        case ENEMY_GET_CARD:
+            return{
+                ...state,
+                user:{
+                    ...state.user,
+                    enemyCardsCount: state.user.enemyCardsCount + 1
+                }
+            }
+        case GAME_RESULT:
+            return{
+                ...state,
+                user:{
+                    ...state.user,
+                    enemyHand: action.enemyHand,
+                    enemyHandSum: action.enemyHandSum
                 }
             }
         case FETCH_PLAY_START:
@@ -528,6 +555,7 @@ export default function playReducer(state = initialState, action){
                 ...state,
                 user: {
                     ...state.user,
+                    enoughCards: action.enoughCards,
                     isPlay: action.isPlay,
                     isEnough: action.isEnough,
                     isMore: action.isMore
@@ -540,6 +568,7 @@ export default function playReducer(state = initialState, action){
                     ...state.user,
                     playerHand: action.playerHand,
                     playerHandSum: action.playerHandSum,
+                    enemyCardsCount: 2,
                     enemyHand: action.enemyHand,
                     enemyHandSum: action.enemyHandSum,
                     isBet: action.isBet,

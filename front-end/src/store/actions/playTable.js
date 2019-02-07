@@ -21,7 +21,9 @@ import {FETCH_PLAY_START,
         ENEMY_BET,
         USER_DIBS_BET,
         ENEMY_DIBS_BET,
-        DELETE_DIBS} from './actionType'
+        DELETE_DIBS,
+        ENEMY_GET_CARD,
+        GAME_RESULT} from './actionType'
 import axios from 'axios'
 
 export function onConnected(profiles){
@@ -60,7 +62,6 @@ export function onGameStart(user, enemy, messages){
 }
 
 export function setActivePlayer(id, isBet = true){
-    console.log(isBet);
     return {
         type: ACTIVE_PLAYER,
         id, isBet
@@ -116,6 +117,20 @@ export function fetchMakeBet(bet, cash, isPlay){
     }
 }
 
+export function enemyGetCard(){
+    return {
+        type: ENEMY_GET_CARD
+    }
+}
+
+export function gameResult(enemyHand, enemyHandSum){
+    console.log(enemyHand, enemyHandSum);
+    return {
+        type: GAME_RESULT,
+        enemyHand, enemyHandSum
+    }
+}
+
 export function getUserProfile(userId){
     return async dispatch =>{
         const data = {
@@ -148,7 +163,7 @@ export function getDataUser(userId){
                 bet: 0,
                 cash: respons.data.bet,
                 name: respons.data.name,
-                isPlay: true
+                isPlay: false
             }
         }
         
@@ -193,8 +208,9 @@ export function onMoreWithUserHandler(){
 }
 
 export function onEnoughWithUserHandler(){
-    return async (dispatch, getState) => {
+    return async (dispatch) => {
         const set_state = {
+            enoughCards: true,
             isPlay: false,
             isEnough: false,
             isMore: false

@@ -196,7 +196,42 @@ namespace blackjack_WebAPI.Hubs
             time--;
         }
 
+        public void MoreCards()
+        {
+            Game game = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
 
+            if(game.user1.connectionId == Context.ConnectionId)
+            {
+                Clients.Client(game.user2.connectionId).onEnemyGetCard();
+            } else
+            {
+                Clients.Client(game.user1.connectionId).onEnemyGetCard();
+            }
+        }
+
+        public void EnoughCards(dynamic hand, int handSum)
+        {
+            int index = PlayProfiles.FindIndex(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
+
+            if (PlayProfiles[index].user1.connectionId == Context.ConnectionId)
+            {
+                PlayProfiles[index].user1.handSum = handSum;
+                PlayProfiles[index].user1.hand = hand;
+            }
+            else
+            {
+                PlayProfiles[index].user2.handSum = handSum;
+                PlayProfiles[index].user2.hand = hand;
+            }
+        }
+
+        public void GameResult()
+        {
+            Game game = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
+            
+            Clients.Client(game.user1.connectionId).onGameResult(game.user2.hand, game.user2.handSum);
+            Clients.Client(game.user2.connectionId).onGameResult(game.user1.hand, game.user1.handSum);
+        }
 
         public void StopGame(int userId)
         {

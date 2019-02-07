@@ -25,7 +25,8 @@ class Profile extends Component{
         console.log('stop');
     }
 
-    componentDidMount(){
+    componentDidMount(){        
+        localStorage.removeItem('user');
         if(localStorage.getItem('userId') === null){
             this.isLogout();
         }

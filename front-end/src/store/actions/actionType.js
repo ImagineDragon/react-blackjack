@@ -13,6 +13,8 @@ export const ENEMY_DIBS_BET = 'ENEMY_DIBS_BET'
 export const DELETE_DIBS = 'DELETE_DIBS'
 export const TIMER = 'TIMER'
 export const NEW_MESSAGE = 'NEW_MESSAGE'
+export const ENEMY_GET_CARD = 'ENEMY_GET_CARD'
+export const GAME_RESULT = 'GAME_RESULT'
 
 export const FETCH_PLAY_START = 'FETCH_PLAY_START' 
 export const FETCH_MAKE_BET = 'FETCH_MAKE_BET'

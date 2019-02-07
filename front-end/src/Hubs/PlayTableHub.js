@@ -15,7 +15,9 @@ import { onGameStart,
         onTimer,
         setActivePlayer,
         onPlayWithUserHandler,
-        enemyDibsBet } from '../store/actions/playTable'
+        enemyDibsBet,
+        enemyGetCard,
+        gameResult } from '../store/actions/playTable'
 
 export const connection = hubConnection('http://localhost:3001'), playHubProxy = connection.createHubProxy('playHub');
 
@@ -26,9 +28,6 @@ class PlayConnection extends Component{
 
         playHubProxy.on('onGameStart', function(user, enemy, messages){
             this.props.onGameStart(user, enemy, messages);
-            // if(this.props.user.activePlayerId === userId){
-            //     playHubProxy.invoke('playOffer', userId);
-            // }
             scrollDown();
         }.bind(this));
 
@@ -51,15 +50,28 @@ class PlayConnection extends Component{
         }.bind(this));
 
         playHubProxy.on('onPlayOffer', function(isBet){
-            this.props.setActivePlayer(userId, isBet);
-            if(!isBet && this.props.user.playerHandSum === 0) {
-                this.props.onPlayWithUserHandler();
+            if(this.props.user.enoughCards){
+                playHubProxy.invoke('gameResult');
+            } else {
+                this.props.setActivePlayer(userId, isBet);
+                if(!isBet && this.props.user.playerHandSum === 0) {
+                    this.props.onPlayWithUserHandler();
+                }
             }
         }.bind(this));
 
         playHubProxy.on('onTimer', function(time){
             this.props.onTimer(time);
-        }.bind(this));            
+        }.bind(this));
+
+        playHubProxy.on('onEnemyGetCard', function(){
+            this.props.enemyGetCard();
+        }.bind(this));
+
+        playHubProxy.on('onGameResult', function(enemyHand, enemyHandSum){
+            console.log('gameResult',enemyHand,enemyHandSum);
+            this.props.gameResult(enemyHand, enemyHandSum);
+        }.bind(this));
 
         if(enemyId !== -1){
             connection.start().done(function(){
@@ -77,6 +89,8 @@ class PlayConnection extends Component{
         playHubProxy.off('onMessage');
         playHubProxy.off('onPlayOffer');
         playHubProxy.off('onTimer');
+        playHubProxy.off('onEnemyGetCard');
+        playHubProxy.off('onGameResult');
     }
 
     render(){
@@ -100,7 +114,9 @@ function mapDispatchToProps(dispatch){
         onBet: (user) => dispatch(onBet(user)),
         onEnemyBet: (enemy) => dispatch(onEnemyBet(enemy)),
         enemyDibsBet: (value) => dispatch(enemyDibsBet(value)),
-        onTimer: (time) => dispatch(onTimer(time))
+        onTimer: (time) => dispatch(onTimer(time)),
+        enemyGetCard: () => dispatch(enemyGetCard()),
+        gameResult: (enemyHand, enemyHandSum) => dispatch(gameResult(enemyHand, enemyHandSum))
     }
 }
 

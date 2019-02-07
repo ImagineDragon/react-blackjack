@@ -7,7 +7,6 @@ import DibsBet from '../../components/Dibs/DibsBet'
 import Rate from '../../components/Rate/Rate'
 import Enemy from '../../components/Enemy/Enemy'
 import PlayButton from '../../components/UI/PlayButton/PlayButton'
-import BetButton from '../../components/UI/BetButton/BetButton'
 import Button from '../../components/UI/Button/Button'
 import Timer from '../../components/UI/Timer/Timer'
 import EnemyHand from '../../components/EnemyHand/EnemyHand'
@@ -52,8 +51,8 @@ class PlayTable extends Component {
         bet = (this.props.bet) + parseInt(value);
         cash = (this.props.cash) - parseInt(value);
         let enableBet = this.props.id === this.props.activePlayerId;
-        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0 && enableBet && bet <= this.props.enemyCash + this.props.enemyBet && this.state.betCount > 0 || 
-            localStorage.getItem('enemyId') === '-1' && bet !== 0 && cash >= 0 && this.props.playerHandSum === 0){            
+        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0 && (enableBet && bet <= this.props.enemyCash + this.props.enemyBet && this.state.betCount > 0 || 
+            enemyId === -1)){            
             var dibs = this.props.dibsBet;
             while(value > 0){
                 if(value >= 200){
@@ -135,14 +134,25 @@ class PlayTable extends Component {
     }
 
     onMore = () =>{
-        console.log('more');
-        this.props.onMoreWithUserHandler();
+        if(enemyId === -1){
+            this.props.onMoreHandler();
+        } else {
+            console.log('more');
+            this.props.onMoreWithUserHandler();
+            playHubProxy.invoke('moreCards');
+        }
     }
 
     onEnough = () =>{
-        console.log('enough');
-        this.props.onEnoughWithUserHandler();
-        this.playOffer(false);
+        if(enemyId === -1){
+            this.props.onEnoughHandler();
+        } else {
+            console.log('enough');
+            this.props.onEnoughWithUserHandler();
+            console.log('enoughCards', this.props.playerHand, this.props.playerHandSum);
+            playHubProxy.invoke('enoughCards', this.props.playerHand, this.props.playerHandSum);
+            this.playOffer(false);
+        }
     }
 
     endGame = () =>{
@@ -159,97 +169,88 @@ class PlayTable extends Component {
         let difference = this.props.enemyBet - this.props.bet;
         return(
             <div className={classes.PlayTable}>
-            <h1>{this.state.s}</h1>
-            <div className={classes.Container}>
-                <PlayConnection/>
-                <Rate
-                    bet={this.props.bet}
-                    cash={this.props.cash}
-                    name={this.props.name}
-                />
-                {enemyId !== -1 ?
-                    <Enemy 
-                        bet={this.props.enemyBet}
-                        cash={this.props.enemyCash}
-                        name={this.props.enemyName}
-                    /> : null
-                }
-                <EnemyHand 
-                    enemyHand={this.props.enemyHand}
-                    enemyHandSum={this.props.enemyHandSum}
-                />
+                <div className={classes.Container}>
+                    <PlayConnection/>
+                    <Rate
+                        bet={this.props.bet}
+                        cash={this.props.cash}
+                        name={this.props.name}
+                    />
+                    {enemyId !== -1 ?
+                        <div>
+                            <Enemy 
+                                bet={this.props.enemyBet}
+                                cash={this.props.enemyCash}
+                                name={this.props.enemyName}
+                            /> 
+                            <Chat
+                                UserName={this.props.name}
+                                Messages={this.props.messages}
+                                onSend={this.onSend}
+                            />
+                        </div> : null
+                    }
+                    <EnemyHand 
+                        enemyCardsCount={this.props.enemyCardsCount}
+                        enemyHand={this.props.enemyHand}
+                        enemyHandSum={this.props.enemyHandSum}
+                    />
 
-                <DibsBet
-                    userDibsBet={this.props.dibsBet}
-                    enemyDibsBet={this.props.enemyDibsBet}
-                />
+                    <DibsBet
+                        userDibsBet={this.props.dibsBet}
+                        enemyDibsBet={this.props.enemyDibsBet}
+                    />
 
-                <Timer
-                    enableBet={enableBet}
-                    time={this.props.time}
-                />
-                <PlayerHand 
-                    playerHand={this.props.playerHand}
-                    playerHandSum={this.props.playerHandSum}
-                />
-                <Dibs 
-                    dibs={this.props.dibs}
-                    onDibCLick={this.onCreateDibHandler}
-                />
-                {this.props.isBet && enemyId !== -1 ?
-                    <BetButton 
+                    <Timer
+                        enableBet={enableBet}
+                        time={this.props.time}
+                    />
+                    <PlayerHand 
+                        playerHand={this.props.playerHand}
+                        playerHandSum={this.props.playerHandSum}
+                    />
+                    <Dibs 
+                        dibs={this.props.dibs}
+                        onDibCLick={this.onCreateDibHandler}
+                    />
+                    <PlayButton 
                         onFold={this.onFold}
                         onCheck={this.onCheck}
                         onRaise={this.onRaise}
                         disabledFold={!enableBet}
                         disabledCheck={!(difference < this.props.cash && difference >= 0 && enableBet)}
                         disabledRaise={!(this.props.bet > this.props.enemyBet && enableBet)}
-                    /> :
-                    enemyId !== -1 ?
-                    <PlayButton
+                        onPlay={this.props.onPlayHandler}
                         onEnough={this.onEnough}
                         onMore={this.onMore}
-                        disabledEnough={!enableBet}
-                        disabledMore={!enableBet}
-                        /*disabledEnough={!this.props.isEnough}
-                        disabledMore={!this.props.isMore}*/
-                    /> :
-                    <PlayButton
-                        onPlay={this.props.onPlayHandler}
-                        onEnough={this.props.onEnoughHandler}
-                        onMore={this.props.onMoreHandler}
                         disabledPlay={!this.props.isPlay}
                         disabledEnough={!this.props.isEnough}
                         disabledMore={!this.props.isMore}
+                        isBet={this.props.isBet}
+                        enemyId={enemyId}
+                        enableBet={enableBet}
                     />
-                }
 
-                {enemyId !== -1 ?
-                    <Chat
-                        UserName={this.props.name}
-                        Messages={this.props.messages}
-                        onSend={this.onSend}
-                    />: null
-                }
-                <div className={classes.Button}>
-                    <NavLink to="/profile">
+                    <div className={classes.Button}>
+                        <NavLink to="/profile">
+                            <Button 
+                                type="success" 
+                                onClick={this.endGame}
+                            >Профиль</Button>
+                        </NavLink>         
                         <Button 
-                            type="success" 
-                            onClick={this.endGame}
-                        >Профиль</Button>
-                    </NavLink>         
-                    <Button 
-                        type="error"
-                        onClick={this.isLogout}
-                    >Выход</Button>
-                </div>                   
-            </div>
+                            type="error"
+                            onClick={this.isLogout}
+                        >Выход</Button>
+                    </div>                   
+                </div>
             </div>
         )
     }
 }
 
 function mapStateToProps(state){
+    localStorage.setItem('user', JSON.stringify(state.playTable.user));
     const { dibs } = state.playTable;
     const { bet, cash, name, time, isBet,
         playerHand, playerHandSum,
@@ -258,7 +259,7 @@ function mapStateToProps(state){
         enemyCash, enemyHand, 
         enemyHandSum, messages, 
         isPlay, isEnough, isMore,
-        activePlayerId, id,
+        activePlayerId, id, enemyCardsCount,
         backProfile, isExit } = state.playTable.user;
     return{
         dibs, bet, cash, name, time,
@@ -268,7 +269,7 @@ function mapStateToProps(state){
         enemyCash, enemyHand,
         enemyHandSum, messages,
         isPlay, isEnough, isMore,
-        activePlayerId, id,
+        activePlayerId, id, enemyCardsCount,
         backProfile, isExit
     };
 }
