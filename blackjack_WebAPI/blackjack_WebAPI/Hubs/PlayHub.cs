@@ -228,9 +228,47 @@ namespace blackjack_WebAPI.Hubs
         public void GameResult()
         {
             Game game = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
-            
+
             Clients.Client(game.user1.connectionId).onGameResult(game.user2.hand, game.user2.handSum);
             Clients.Client(game.user2.connectionId).onGameResult(game.user1.hand, game.user1.handSum);
+
+            int user1Score = 21 - game.user1.handSum;
+            int user2Score = 21 - game.user2.handSum;
+            int winnerId;
+            if (user1Score == user2Score)
+            {
+                winnerId = -1;
+            }
+            else if (user1Score >= 0 && user2Score >= 0)
+            {
+                if (user1Score < user2Score)
+                {
+                    winnerId = game.user1.id;
+                }
+                else
+                {
+                    winnerId = game.user2.id;
+                }
+            }
+            else if(user1Score >= 0 && user2Score < 0)
+            {
+                winnerId = game.user1.id;
+            }
+            else if(user2Score >= 0 && user1Score < 0)
+            {
+                winnerId = game.user2.id;
+            }
+            else if (user1Score > user2Score)
+            {
+                winnerId = game.user1.id;
+            }
+            else
+            {
+                winnerId = game.user2.id;
+            }
+
+            Clients.Client(game.user1.connectionId).onGameEnd(winnerId);
+            Clients.Client(game.user2.connectionId).onGameEnd(winnerId);
         }
 
         public void StopGame(int userId)

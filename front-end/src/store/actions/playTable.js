@@ -23,7 +23,8 @@ import {FETCH_PLAY_START,
         ENEMY_DIBS_BET,
         DELETE_DIBS,
         ENEMY_GET_CARD,
-        GAME_RESULT} from './actionType'
+        GAME_RESULT,
+        GAME_END} from './actionType'
 import axios from 'axios'
 
 export function onConnected(profiles){
@@ -124,10 +125,43 @@ export function enemyGetCard(){
 }
 
 export function gameResult(enemyHand, enemyHandSum){
-    console.log(enemyHand, enemyHandSum);
     return {
         type: GAME_RESULT,
         enemyHand, enemyHandSum
+    }
+}
+
+export function gameEnd(winnerId){
+    return async (dispatch, getState) => {        
+        const state = getState().playTable;
+        let cash, enemyCash;
+        if(winnerId === -1){
+            alert('Победила дружба!!!!!!!!!!!!!'); 
+            cash = state.user.cash + state.user.bet;
+            enemyCash = state.user.enemyCash + state.user.enemyBet;
+        }
+        else if(winnerId === state.user.id){
+            alert('Вы выграли!!!!!!!!!!!!!'); 
+            cash = state.user.cash + state.user.bet * 2;
+            enemyCash = state.user.enemyCash;
+        }
+        else{
+            alert('Вы проиграли!!!!!!!');
+            cash = state.user.cash;
+            enemyCash = state.user.enemyCash + state.user.enemyBet * 2;
+        }
+        const setState = {
+            cash,
+            enemyCash
+        }; 
+        await dispatch(endGame(setState));
+    }
+}
+
+export function endGame(setState){
+    return{
+        type: GAME_END,
+        ...setState
     }
 }
 
@@ -312,9 +346,7 @@ export function onEnoughHandler(){
                     bet: 0,
                     enemyHandSum: 0,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 }; 
                 dispatch(loseGame(lose_setState));
                 dispatch(onDeletDib()); 
@@ -330,9 +362,7 @@ export function onEnoughHandler(){
                     bet: 0,
                     cash,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 }; 
                 dispatch(winGame(win_setState));
                 dispatch(onDeletDib());  
@@ -348,9 +378,7 @@ export function onEnoughHandler(){
                     bet: 0,
                     cash,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 }; 
                 dispatch(drawGame(draw_setState));
                 dispatch(onDeletDib());  
@@ -367,9 +395,7 @@ export function onEnoughHandler(){
                     bet: 0,
                     enemyHandSum: 0,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 };
                 updateData(cash);
                 dispatch(loseGame(lose_setState));
@@ -400,9 +426,7 @@ export function onMoreHandler(){
                     bet: 0,
                     cash,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 };
                 dispatch(winGame(win_setState));
                 dispatch(onDeletDib());
@@ -420,9 +444,7 @@ export function onMoreHandler(){
                     bet: 0,
                     enemyHandSum: 0,
                     playerHand:[],
-                    enemyHand:[],
-                    isEnough: false,
-                    isMore: false
+                    enemyHand:[]
                 };
                 updateData(cash);
                 dispatch(loseGame(lose_setState));  

@@ -30,7 +30,6 @@ var userId, enemyId;
 class PlayTable extends Component {
     state = {
         isLogout: false,
-        betCount: 3,
         isFold: false,
         isCheck: false,
         isRaise: false
@@ -51,7 +50,7 @@ class PlayTable extends Component {
         bet = (this.props.bet) + parseInt(value);
         cash = (this.props.cash) - parseInt(value);
         let enableBet = this.props.id === this.props.activePlayerId;
-        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0 && (enableBet && bet <= this.props.enemyCash + this.props.enemyBet && this.state.betCount > 0 || 
+        if(bet !== 0 && cash >= 0 && this.props.playerHandSum === 0 && ((enableBet && bet <= this.props.enemyCash + this.props.enemyBet && this.props.betCount > 0) || 
             enemyId === -1)){            
             var dibs = this.props.dibsBet;
             while(value > 0){
@@ -89,8 +88,8 @@ class PlayTable extends Component {
         enemyId = parseInt(localStorage.getItem('enemyId'));
 
         console.log('user = ' + userId + ' enemy = ' + enemyId);
-
-        if(userId == null){
+        console.log(localStorage.getItem('userId'));
+        if(localStorage.getItem('userId') == null){
             this.setState({
                 isLogout: true
             });
@@ -127,9 +126,6 @@ class PlayTable extends Component {
     }
 
     onRaise = () =>{
-        this.setState({
-            betCount: this.state.betCount - 1
-        });
         this.playOffer();
     }
 
@@ -137,7 +133,6 @@ class PlayTable extends Component {
         if(enemyId === -1){
             this.props.onMoreHandler();
         } else {
-            console.log('more');
             this.props.onMoreWithUserHandler();
             playHubProxy.invoke('moreCards');
         }
@@ -147,9 +142,7 @@ class PlayTable extends Component {
         if(enemyId === -1){
             this.props.onEnoughHandler();
         } else {
-            console.log('enough');
             this.props.onEnoughWithUserHandler();
-            console.log('enoughCards', this.props.playerHand, this.props.playerHandSum);
             playHubProxy.invoke('enoughCards', this.props.playerHand, this.props.playerHandSum);
             this.playOffer(false);
         }
@@ -255,7 +248,7 @@ function mapStateToProps(state){
     const { bet, cash, name, time, isBet,
         playerHand, playerHandSum,
         dibsBet, enemyDibsBet,
-        enemyName, enemyBet,
+        enemyName, enemyBet, betCount,
         enemyCash, enemyHand, 
         enemyHandSum, messages, 
         isPlay, isEnough, isMore,
@@ -265,7 +258,7 @@ function mapStateToProps(state){
         dibs, bet, cash, name, time,
         playerHand, playerHandSum, isBet,
         dibsBet, enemyDibsBet,
-        enemyName, enemyBet,
+        enemyName, enemyBet, betCount,
         enemyCash, enemyHand,
         enemyHandSum, messages,
         isPlay, isEnough, isMore,

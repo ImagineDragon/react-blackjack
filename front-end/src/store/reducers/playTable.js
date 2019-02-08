@@ -23,7 +23,8 @@ import {FETCH_PLAY_START,
         ENEMY_DIBS_BET,
         DELETE_DIBS,
         ENEMY_GET_CARD,
-        GAME_RESULT} from '../actions/actionType'
+        GAME_RESULT,
+        GAME_END} from '../actions/actionType'
 
 let user = JSON.parse(localStorage.getItem('user')) || {
     id: -1,        
@@ -44,6 +45,7 @@ let user = JSON.parse(localStorage.getItem('user')) || {
     enemyDibsBet: [],
     isBet: true,
     activePlayerId: 0,
+    betCount: 3,
     messages: [],
     time: -1,
     isPlay: false,
@@ -429,6 +431,7 @@ export default function playReducer(state = initialState, action){
                 ...state,
                 user:{
                     ...state.user,
+                    betCount: state.user.betCount - 1,
                     cash: action.user.cash,
                     bet: action.user.bet
                 }
@@ -500,6 +503,29 @@ export default function playReducer(state = initialState, action){
                     ...state.user,
                     enemyHand: action.enemyHand,
                     enemyHandSum: action.enemyHandSum
+                }
+            }
+        case GAME_END:
+            return{
+                ...state,
+                user:{
+                    ...state.user,
+                    bet: 0,
+                    cash: action.cash,
+                    playerHand: [],
+                    playerHandSum: 0,
+                    enoughCards: false,
+                    dibsBet: [],
+                    enemyBet: 0,
+                    enemyCash: action.enemyCash,
+                    enemyCardsCount: 0,
+                    enemyHand: [],
+                    enemyHandSum: 0,
+                    enemyDibsBet: [],
+                    betCount: 3,
+                    isBet: true,
+                    isEnough: false,
+                    isMore: false
                 }
             }
         case FETCH_PLAY_START:

@@ -17,7 +17,8 @@ import { onGameStart,
         onPlayWithUserHandler,
         enemyDibsBet,
         enemyGetCard,
-        gameResult } from '../store/actions/playTable'
+        gameResult,
+        gameEnd } from '../store/actions/playTable'
 
 export const connection = hubConnection('http://localhost:3001'), playHubProxy = connection.createHubProxy('playHub');
 
@@ -50,10 +51,10 @@ class PlayConnection extends Component{
         }.bind(this));
 
         playHubProxy.on('onPlayOffer', function(isBet){
+            this.props.setActivePlayer(userId, isBet);
             if(this.props.user.enoughCards){
                 playHubProxy.invoke('gameResult');
             } else {
-                this.props.setActivePlayer(userId, isBet);
                 if(!isBet && this.props.user.playerHandSum === 0) {
                     this.props.onPlayWithUserHandler();
                 }
@@ -69,8 +70,12 @@ class PlayConnection extends Component{
         }.bind(this));
 
         playHubProxy.on('onGameResult', function(enemyHand, enemyHandSum){
-            console.log('gameResult',enemyHand,enemyHandSum);
             this.props.gameResult(enemyHand, enemyHandSum);
+        }.bind(this));
+
+        playHubProxy.on('onGameEnd', function(winnerId){
+            this.props.gameEnd(winnerId);            
+            //history.push('/profile');
         }.bind(this));
 
         if(enemyId !== -1){
@@ -91,6 +96,7 @@ class PlayConnection extends Component{
         playHubProxy.off('onTimer');
         playHubProxy.off('onEnemyGetCard');
         playHubProxy.off('onGameResult');
+        playHubProxy.off('onGameEnd');
     }
 
     render(){
@@ -116,7 +122,8 @@ function mapDispatchToProps(dispatch){
         enemyDibsBet: (value) => dispatch(enemyDibsBet(value)),
         onTimer: (time) => dispatch(onTimer(time)),
         enemyGetCard: () => dispatch(enemyGetCard()),
-        gameResult: (enemyHand, enemyHandSum) => dispatch(gameResult(enemyHand, enemyHandSum))
+        gameResult: (enemyHand, enemyHandSum) => dispatch(gameResult(enemyHand, enemyHandSum)),
+        gameEnd: (winnerId) => dispatch(gameEnd(winnerId))
     }
 }
 
