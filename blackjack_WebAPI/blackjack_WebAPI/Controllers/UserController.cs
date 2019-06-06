@@ -8,6 +8,8 @@ using System.Text;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using blackjack_WebAPI.Models;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
 
 namespace blackjack_WebAPI.Controllers
 {
@@ -54,6 +56,7 @@ namespace blackjack_WebAPI.Controllers
         [HttpPost]
         public Registration Registration(Registration reg)
         {
+
             User user = db.Users.FirstOrDefault(u => u.Email == reg.Email);
 
             if (user != null)
@@ -61,7 +64,7 @@ namespace blackjack_WebAPI.Controllers
                 return null;
             }
 
-            User addUser = new User { Name = reg.Name, Email = reg.Email, Password = GetHashString(reg.Password), Bet = 1500 };
+            User addUser = new User { Name = reg.Name, Email = reg.Email, Password = GetHashString(reg.Password), Cash = 1500 };
 
             db.Users.Add(addUser);
             db.SaveChanges();
@@ -79,22 +82,18 @@ namespace blackjack_WebAPI.Controllers
                 return null;
             }
 
-            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
+            //const string accountSid = "ACbddc39e446508fe2298d2788022444aa";
+            //const string authToken = "399b4f466badd23be3a42325bf33cc81";
 
-            return profile;
-        }
+            //TwilioClient.Init(accountSid, authToken);
 
-        [HttpPost]
-        public ProfilePost Play(ProfileGet id)
-        {
-            User user = db.Users.FirstOrDefault(u => u.Id == id.userId);
+            //var message = MessageResource.Create(
+            //    body: "Ку",
+            //    from: new Twilio.Types.PhoneNumber("+12282000870"),
+            //    to: new Twilio.Types.PhoneNumber("+380633032652")
+            //    );
 
-            if (user == null)
-            {
-                return null;
-            }
-
-            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, bet = user.Bet };
+            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, cash = user.Cash };
 
             return profile;
         }
@@ -104,7 +103,7 @@ namespace blackjack_WebAPI.Controllers
         {
             User user = db.Users.FirstOrDefault(u => u.Id.ToString() == update.userUpdate);
 
-            user.Bet = update.cash;
+            user.Cash = update.cash;
             db.SaveChanges();
 
             return user;

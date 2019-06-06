@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import classes from './Chat.css'
+import './Chat.css'
 import {connect} from 'react-redux'
 
 import {onMessage} from '../../../store/actions/playTable'
@@ -11,7 +11,7 @@ class Chat extends Component{
 
     componentDidMount(){
         var chat = document.getElementById('chat');
-        chat.classList.add(classes.hideChat);
+        chat.classList.add("hideChat");
     }
 
     handleChange = (e) =>{
@@ -31,20 +31,20 @@ class Chat extends Component{
 
     showChat = () =>{
         var chat = document.getElementById('chat');
-        chat.classList.replace(classes.hideChat, classes.showChat);
+        chat.classList.replace("hideChat", "showChat");
     }
 
     hideChat = (e) =>{
         e.target.value = '';
         var chat = document.getElementById('chat');        
-        chat.classList.replace(classes.showChat, classes.hideChat);
+        chat.classList.replace("showChat", "hideChat");
         scrollDown();
     }
 
     render(){
         return(
-            <div id='chat' className={classes.Chat}> 
-                <div id='messages' className={classes.Message}>
+            <div id='chat' className="Chat"> 
+                <div id='messages' className="Message">
                     {this.props.Messages.map((message, id) =>{
                         return(
                             <p key={id}>{message.userName === this.props.UserName ? <b>{message.userName}:</b> : <span>{message.userName}:</span>} {message.message}</p>

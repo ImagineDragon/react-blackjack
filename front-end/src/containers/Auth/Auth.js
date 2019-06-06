@@ -1,5 +1,5 @@
 ﻿import React, {Component} from 'react'
-import classes from './Auth.css'
+import './Auth.css'
 import Input from '../../components/UI/Input/Input'
 import Button from '../../components/UI/Button/Button'
 import {NavLink, Redirect} from 'react-router-dom'
@@ -139,9 +139,9 @@ class Auth extends Component{
 			return (<Redirect to='/profile' path/>);
 		}else{
 			return(
-				<div className={classes.Auth} >
+				<div className="Auth" >
 					<div>
-						<form onSubmit={this.submitHandler} className={classes.AuthForm}>
+						<form onSubmit={this.submitHandler} className="AuthForm">
 							{this.renderInputs()}
 							<hr />
 							<span id="LogIn"><Button 

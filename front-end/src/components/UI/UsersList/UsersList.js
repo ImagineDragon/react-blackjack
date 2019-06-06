@@ -1,12 +1,12 @@
 import React from 'react'
 import Button from '../Button/Button'
-import classes from './UsersList.css'
+import './UsersList.css'
 
 const Users = props =>{
     return(
         <div>
             Users online: {props.Count}
-            <div className={classes.UsersList}>                                
+            <div className="UsersList">                                
                 {props.Users.map((user) =>{
                         if(user.id === parseInt(localStorage.getItem('userId'))){
                             return(<div key = {user.id} > <b>{user.name}</b> </div>);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
 using System.Web;
@@ -9,10 +10,19 @@ namespace blackjack_WebAPI.Models
     public class User
     {
         public int Id { get; set; }
+
+        [Required]
         public string Name { get; set; }
+
+        [Required]
+        [EmailAddress]
         public string Email { get; set; }
+
+        [Required]
         public string Password { get; set; }
-        public int Bet { get; set; }
+
+        [Required]
+        public int Cash { get; set; }
     }
 
     public class Auth
@@ -31,7 +41,7 @@ namespace blackjack_WebAPI.Models
         public int id { get; set; }
         public string name { get; set; }
         public string email { get; set; }
-        public int bet { get; set; }
+        public int cash { get; set; }
     }
 
     public class Registration

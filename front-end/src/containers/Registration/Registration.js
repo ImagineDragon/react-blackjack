@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import classes from './Registration.css'
+import './Registration.css'
 import Input from '../../components/UI/Input/Input'
 import Button from '../../components/UI/Button/Button'
 import {NavLink, Redirect } from 'react-router-dom'
@@ -69,11 +69,8 @@ class Registration extends Component{
 			email: this.state.formControls.email.value,
 			password: this.state.formControls.password.value
 		};
-
-		console.log(dataAuth);
 				
 		const respons = await axios.post('http://localhost:3001/registration', dataAuth);
-		console.log(respons.data);
 		if(respons.data){
 			this.setState({
 				isRegistr: true
@@ -161,9 +158,9 @@ class Registration extends Component{
 			return (<Redirect to='/' path/>)
 		}else{
 			return(
-				<div className={classes.Registration} >
+				<div className="Registration" >
 					<div>
-						<form onSubmit={this.submitHandler} className={classes.RegistrationForm}>
+						<form onSubmit={this.submitHandler} className="RegistrationForm">
 							{this.renderInputs()}
 							<hr />
 							<NavLink to='/'>

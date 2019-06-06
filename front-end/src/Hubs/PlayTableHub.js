@@ -9,18 +9,16 @@ import { connect } from 'react-redux'
 import { scrollDown } from '../components/UI/Chat/Chat'
 
 import { onGameStart,
-        onBet,
         onEnemyBet,
         onMessage,
         onTimer,
         setActivePlayer,
-        onPlayWithUserHandler,
-        enemyDibsBet,
+        onPlayHandler,
         enemyGetCard,
         gameResult,
         gameEnd } from '../store/actions/playTable'
 
-export const connection = hubConnection('http://localhost:3001'), playHubProxy = connection.createHubProxy('playHub');
+export const connection = hubConnection('http://localhost:3001/'), playHubProxy = connection.createHubProxy('playHub');
 
 class PlayConnection extends Component{
     componentDidMount(){
@@ -33,12 +31,7 @@ class PlayConnection extends Component{
         }.bind(this));
 
         playHubProxy.on('onEnemyBet', function(enemy, dibsBet){
-            this.props.enemyDibsBet(dibsBet);
-            this.props.onEnemyBet(enemy);
-        }.bind(this));
-
-        playHubProxy.on('onBet', function(user){                  
-            this.props.onBet(user);
+            this.props.onEnemyBet(enemy.bet, enemy.cash, dibsBet);
         }.bind(this));
 
         playHubProxy.on('onStopGame', function(){
@@ -51,12 +44,16 @@ class PlayConnection extends Component{
         }.bind(this));
 
         playHubProxy.on('onPlayOffer', function(isBet){
-            this.props.setActivePlayer(userId, isBet);
+            let betCount = this.props.user.betCount;
+            if(this.props.user.bet > 0 && isBet){
+                betCount--;
+            }
+            this.props.setActivePlayer(userId, isBet, betCount);
             if(this.props.user.enoughCards){
                 playHubProxy.invoke('gameResult');
             } else {
                 if(!isBet && this.props.user.playerHandSum === 0) {
-                    this.props.onPlayWithUserHandler();
+                    this.props.onPlayHandler();
                 }
             }
         }.bind(this));
@@ -79,8 +76,7 @@ class PlayConnection extends Component{
         }.bind(this));
 
         if(enemyId !== -1){
-            connection.start().done(function(){
-                console.log('start game');
+            connection.start({ transport: 'serverSentEvents' }).done(function(){
                 playHubProxy.invoke('gameStart', userId);
             });
         }
@@ -115,11 +111,9 @@ function mapDispatchToProps(dispatch){
     return{
         onGameStart: (user, enemy, messages) => dispatch(onGameStart(user, enemy, messages)),
         onMessage: (message) => dispatch(onMessage(message)),
-        setActivePlayer: (id, isBet) => dispatch(setActivePlayer(id, isBet)),
-        onPlayWithUserHandler: () => dispatch(onPlayWithUserHandler()),
-        onBet: (user) => dispatch(onBet(user)),
-        onEnemyBet: (enemy) => dispatch(onEnemyBet(enemy)),
-        enemyDibsBet: (value) => dispatch(enemyDibsBet(value)),
+        setActivePlayer: (id, isBet, betCount) => dispatch(setActivePlayer(id, isBet, betCount)),
+        onPlayHandler: () => dispatch(onPlayHandler()),
+        onEnemyBet: (bet, cash, dibsBet) => dispatch(onEnemyBet(bet, cash, dibsBet)),
         onTimer: (time) => dispatch(onTimer(time)),
         enemyGetCard: () => dispatch(enemyGetCard()),
         gameResult: (enemyHand, enemyHandSum) => dispatch(gameResult(enemyHand, enemyHandSum)),

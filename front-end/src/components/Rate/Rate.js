@@ -1,14 +1,14 @@
 import React from 'react'
-import classes from './Rate.css'
+import './Rate.css'
 
 const Rate = props => (
-    <div className={classes.Rate}>
+    <div className="Rate">
         <p>Сделайте ставку, <br/><strong id="user">{props.name}</strong></p>
-        <div className={classes.bet}>
+        <div className="bet">
           <label>Банк:</label>
           <p>{props.cash}</p>
         </div>
-        <div className={classes.cash}>
+        <div className="cash">
           <label>Ставка:</label>
           <p>{props.bet}</p>
         </div>        

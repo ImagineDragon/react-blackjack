@@ -408,8 +408,15 @@ D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\System.Web.Http.Cors.xml
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Newtonsoft.Json.xml
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\System.Web.Http.WebHost.xml
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
-D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.csprojAssemblyReference.cache
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.csproj.CoreCompileInputs.cache
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.csproj.CopyComplete
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.dll
 D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.pdb
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\obj\Debug\blackjack_WebAPI.csprojAssemblyReference.cache
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Microsoft.IdentityModel.Logging.dll
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Microsoft.IdentityModel.Tokens.dll
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\System.IdentityModel.Tokens.Jwt.dll
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Twilio.dll
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Microsoft.IdentityModel.Tokens.xml
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\System.IdentityModel.Tokens.Jwt.xml
+D:\C#\blackjack_WebAPI - new\blackjack_WebAPI\bin\Twilio.xml

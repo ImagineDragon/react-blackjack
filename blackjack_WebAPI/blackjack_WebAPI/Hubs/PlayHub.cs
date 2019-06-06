@@ -28,7 +28,7 @@ namespace blackjack_WebAPI.Hubs
             {
                 User user = db.Users.FirstOrDefault(u => u.Id == userId);
                 if (user == null) return;
-                HubProfile newUser = new HubProfile { connectionId = Context.ConnectionId, id = userId, name = user.Name, email = user.Email, cash = user.Bet, bet = 0, ready = false };
+                HubProfile newUser = new HubProfile { connectionId = Context.ConnectionId, id = userId, name = user.Name, email = user.Email, cash = user.Cash, bet = 0, ready = false };
                 Profiles.Add(newUser);
 
                 Clients.Caller.onConnected(Profiles);
@@ -151,8 +151,6 @@ namespace blackjack_WebAPI.Hubs
                 user = PlayProfiles[index].user2;
                 enemy = PlayProfiles[index].user1;
             }
-            
-            Clients.Caller.onBet(user);
 
             Clients.Client(enemy.connectionId).onEnemyBet(user, dibsBet);
         }
@@ -227,13 +225,13 @@ namespace blackjack_WebAPI.Hubs
 
         public void GameResult()
         {
-            Game game = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
+            int index = PlayProfiles.FindIndex(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
+            
+            Clients.Client(PlayProfiles[index].user1.connectionId).onGameResult(PlayProfiles[index].user2.hand, PlayProfiles[index].user2.handSum);
+            Clients.Client(PlayProfiles[index].user2.connectionId).onGameResult(PlayProfiles[index].user1.hand, PlayProfiles[index].user1.handSum);
 
-            Clients.Client(game.user1.connectionId).onGameResult(game.user2.hand, game.user2.handSum);
-            Clients.Client(game.user2.connectionId).onGameResult(game.user1.hand, game.user1.handSum);
-
-            int user1Score = 21 - game.user1.handSum;
-            int user2Score = 21 - game.user2.handSum;
+            int user1Score = 21 - PlayProfiles[index].user1.handSum;
+            int user2Score = 21 - PlayProfiles[index].user2.handSum;
             int winnerId;
             if (user1Score == user2Score)
             {
@@ -243,32 +241,54 @@ namespace blackjack_WebAPI.Hubs
             {
                 if (user1Score < user2Score)
                 {
-                    winnerId = game.user1.id;
+                    winnerId = PlayProfiles[index].user1.id;
                 }
                 else
                 {
-                    winnerId = game.user2.id;
+                    winnerId = PlayProfiles[index].user2.id;
                 }
             }
             else if(user1Score >= 0 && user2Score < 0)
             {
-                winnerId = game.user1.id;
+                winnerId = PlayProfiles[index].user1.id;
             }
             else if(user2Score >= 0 && user1Score < 0)
             {
-                winnerId = game.user2.id;
+                winnerId = PlayProfiles[index].user2.id;
             }
             else if (user1Score > user2Score)
             {
-                winnerId = game.user1.id;
+                winnerId = PlayProfiles[index].user1.id;
             }
             else
             {
-                winnerId = game.user2.id;
+                winnerId = PlayProfiles[index].user2.id;
             }
 
-            Clients.Client(game.user1.connectionId).onGameEnd(winnerId);
-            Clients.Client(game.user2.connectionId).onGameEnd(winnerId);
+            PlayProfiles[index].timer.Change(Timeout.Infinite, Timeout.Infinite);
+
+            if(winnerId == PlayProfiles[index].user1.id)
+            {
+                PlayProfiles[index].user1.cash += PlayProfiles[index].user1.bet * 2;
+            } else if(winnerId == PlayProfiles[index].user2.id)
+            {
+                PlayProfiles[index].user2.cash += PlayProfiles[index].user2.bet * 2;
+            }
+            else
+            {
+                PlayProfiles[index].user1.cash += PlayProfiles[index].user1.bet;
+                PlayProfiles[index].user2.cash += PlayProfiles[index].user2.bet;
+            }
+
+            PlayProfiles[index].user1.bet = 0;
+            PlayProfiles[index].user2.bet = 0;
+            PlayProfiles[index].user1.hand = null;
+            PlayProfiles[index].user1.handSum = 0;
+            PlayProfiles[index].user2.hand = null;
+            PlayProfiles[index].user2.handSum = 0;
+
+            Clients.Client(PlayProfiles[index].user1.connectionId).onGameEnd(winnerId);
+            Clients.Client(PlayProfiles[index].user2.connectionId).onGameEnd(winnerId);
         }
 
         public void StopGame(int userId)
@@ -298,10 +318,12 @@ namespace blackjack_WebAPI.Hubs
                 Clients.All.onUserDisconnected(profile);
             }
 
+            Thread.Sleep(2000);
+
             var playProfile = PlayProfiles.FirstOrDefault(u => u.user1.connectionId == Context.ConnectionId || u.user2.connectionId == Context.ConnectionId);
             if (playProfile != null)
             {
-                PlayProfiles.Remove(playProfile);
+                StopGame(playProfile.user1.id);
             }
 
             return base.OnDisconnected(stopCalled);

@@ -1,18 +1,18 @@
 import React from 'react'
-import classes from './Dib.css'
+import './Dib.css'
 
 const Dib = props =>{
-    const cls = [classes.Dib]
+    const cls = ["Dib"]
     let classView = props.dib.classView
     switch(classView){
         case 'blue':
-            cls.push(classes.blue)
+            cls.push("blue")
             break;
         case 'yellow':
-            cls.push(classes.yellow)
+            cls.push("yellow")
             break;
         default:
-            cls.push(classes.red)
+            cls.push("red")
     }
     return(
         <li className={cls.join(' ')}

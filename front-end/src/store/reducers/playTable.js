@@ -1,26 +1,19 @@
-import {FETCH_PLAY_START,
-        FETCH_MAKE_BET,
-        HAND_SUCCESS,
-        WIN_GAME,
-        LOSE_GAME,
-        DRAW_GAME,
-        DEAL_HAND,
-        PLAY_HAND,
-        USER_PROFILE,
-        DATA_USER,
-        ENOUGH_HAND,
+import {USER_PROFILE,
         USER_CONNECT,
         NEW_USER_CONNECT,
         USER_DISCONNECT,
         USER_READY,
+        HAND_SUCCESS,
+        DEAL_HAND,
+        PLAY_HAND,
+        USER_DATA_UPDATE,
+        ENOUGH_HAND,
         GAME_START,
         ACTIVE_PLAYER,
-        BET,
+        USER_BET,
         ENEMY_BET,
         TIMER,
         NEW_MESSAGE,
-        USER_DIBS_BET,
-        ENEMY_DIBS_BET,
         DELETE_DIBS,
         ENEMY_GET_CARD,
         GAME_RESULT,
@@ -348,7 +341,6 @@ const initialState = {
             classView: 'red'
         }
     ],
-    count: 0,
     users: [],
     user
 }
@@ -376,6 +368,7 @@ export default function playReducer(state = initialState, action){
                         enemyCardsCount: 0,
                         enemyDibsBet: [],
                         isBet: true,
+                        betCount: 3,
                         activePlayerId: 0,
                         messages: [],
                         time: -1,
@@ -384,26 +377,25 @@ export default function playReducer(state = initialState, action){
         case USER_CONNECT:
             return{
                 ...state,
-                count: action.profiles.length,
                 users: action.profiles
             }
         case NEW_USER_CONNECT:
             return{
                 ...state,
-                users: [...state.users, action.newUser],
-                count: state.count + 1
+                users: [...state.users, action.newUser]
             }
         case USER_DISCONNECT:
             return{
                 ...state,
-                users: state.users.filter(user => user.id !== action.profile.id),
-                count: state.count - 1
+                users: state.users.filter(user => user.id !== action.profile.id)
             }
         case USER_READY:
             return{
                 ...state,
                 users: state.users.map(user => user.id === action.profile.id ? action.profile : user)
             }
+
+
         case GAME_START:
             return{
                 ...state,
@@ -423,17 +415,19 @@ export default function playReducer(state = initialState, action){
                 user:{
                     ...state.user,
                     isBet: action.isBet,
-                    activePlayerId: action.id
+                    activePlayerId: action.id,
+                    betCount: action.betCount
                 }
             }
-        case BET:
+        case USER_BET:
             return{
                 ...state,
                 user:{
                     ...state.user,
-                    betCount: state.user.betCount - 1,
-                    cash: action.user.cash,
-                    bet: action.user.bet
+                    bet: action.bet,
+                    cash: action.cash,
+                    dibsBet: action.dibsBet,
+                    isPlay: true
                 }
             }
         case ENEMY_BET:
@@ -441,35 +435,9 @@ export default function playReducer(state = initialState, action){
                 ...state,
                 user:{
                     ...state.user,
-                    enemyCash: action.enemy.cash,
-                    enemyBet: action.enemy.bet
-                }
-            }
-        case USER_DIBS_BET:
-            return{
-                ...state,
-                user:{
-                    ...state.user,
-                    dibsBet: action.dibsBet
-                }
-            }
-        case ENEMY_DIBS_BET:
-            return{
-                ...state,
-                user:{
-                    ...state.user,
+                    enemyCash: action.cash,
+                    enemyBet: action.bet,
                     enemyDibsBet: action.dibsBet
-                }
-            }
-        case DELETE_DIBS:
-            return{
-                ...state,
-                user:{
-                    ...state.user,
-                    dibsBet: [],
-                    enemyDibsBet:[],
-                    enemyCardsCount: 0,
-                    enoughCards: false
                 }
             }
         case NEW_MESSAGE:
@@ -496,7 +464,18 @@ export default function playReducer(state = initialState, action){
                     enemyCardsCount: state.user.enemyCardsCount + 1
                 }
             }
-        case GAME_RESULT:
+        case DELETE_DIBS:
+        return{
+            ...state,
+            user:{
+                ...state.user,
+                dibsBet: [],
+                enemyDibsBet:[],
+                enemyCardsCount: 0,
+                enoughCards: false
+            }
+        }
+       case GAME_RESULT:
             return{
                 ...state,
                 user:{
@@ -528,52 +507,18 @@ export default function playReducer(state = initialState, action){
                     isMore: false
                 }
             }
-        case FETCH_PLAY_START:
+        case USER_DATA_UPDATE:            
             return{
-                ...state
-            }
-        case DATA_USER:
-            if(action.playerHand === undefined){
-                return{
-                    ...state,
-                    user: {
-                        ...state.user,
-                        playerHand: [],
-                        playerHandSum: 0,
-                        enemyHand: [],
-                        enemyHandSum: 0,
-                        bet: action.bet,
-                        cash: action.cash,
-                        name: action.name,
-                        isPlay: action.isPlay
-                    }
-                }
-            } else{
-                return{
-                    ...state,
-                    user: {
-                        ...state.user,
-                        playerHand: action.playerHand,
-                        playerHandSum: action.playerHandSum,
-                        enemyHand: action.enemyHand,
-                        enemyHandSum: action.enemyHandSum,
-                        bet: action.bet,
-                        cash: action.cash,
-                        name: action.name,
-                        isPlay: false,
-                        isEnough: true,
-                        isMore: true
-                    }
-                }
-            }
-        case FETCH_MAKE_BET:
-            return{
-                ...state, 
+                ...state,
                 user: {
                     ...state.user,
-                    bet: action.bet, 
+                    playerHand: [],
+                    playerHandSum: 0,
+                    enemyHand: [],
+                    enemyHandSum: 0,
+                    bet: 0,
                     cash: action.cash,
-                    isPlay: action.isPlay
+                    name: action.name
                 }
             }
         case ENOUGH_HAND:
@@ -601,50 +546,6 @@ export default function playReducer(state = initialState, action){
                     isPlay: false,
                     isEnough: true,
                     isMore: true
-                }
-            }
-        case WIN_GAME:
-            return{
-                ...state,
-                user: {
-                    ...state.user,
-                    playerHandSum: action.playerHandSum,
-                    enemyHandSum: action.enemyHandSum,
-                    bet: action.bet,
-                    cash: action.cash,
-                    playerHand: action.playerHand,
-                    enemyHand: action.enemyHand,
-                    isEnough: false,
-                    isMore: false
-                }
-            }
-        case LOSE_GAME:
-            return{
-                ...state,
-                user: {
-                    ...state.user,
-                    playerHandSum: action.playerHandSum,
-                    bet: action.bet,
-                    enemyHandSum: action.enemyHandSum,
-                    playerHand: action.playerHand,
-                    enemyHand: action.enemyHand,
-                    isEnough: false,
-                    isMore: false
-                }
-            }
-        case DRAW_GAME:
-            return{
-                ...state,
-                user: {
-                    ...state.user,
-                    playerHandSum: action.playerHandSum,
-                    enemyHandSum: action.enemyHandSum,
-                    bet: action.bet,
-                    cash: action.cash,
-                    playerHand: action.playerHand,
-                    enemyHand: action.enemyHand,
-                    isEnough: false,
-                    isMore: false
                 }
             }
         case DEAL_HAND:

@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
 import {NavLink, Redirect} from 'react-router-dom'
-import classes from './PlayTable.css'
+import './PlayTable.css'
 import Dibs from '../../components/Dibs/Dibs'
 import DibsBet from '../../components/Dibs/DibsBet'
 import Rate from '../../components/Rate/Rate'
@@ -11,16 +11,12 @@ import Button from '../../components/UI/Button/Button'
 import Timer from '../../components/UI/Timer/Timer'
 import EnemyHand from '../../components/EnemyHand/EnemyHand'
 import PlayerHand from '../../components/PlayerHand/PlayerHand'
-import {fetchMakeBet, 
+import {userBet, 
         onPlayHandler,
         onEnoughHandler,
         onMoreHandler,
-        getDataUser,
-        onPlayWithUserHandler,
-        onMoreWithUserHandler,
-        onEnoughWithUserHandler,
         setActivePlayer,
-        userDibsBet} from '../../store/actions/playTable'
+        } from '../../store/actions/playTable'
 
 import Chat from '../../components/UI/Chat/Chat'
 import PlayConnection, {connection, playHubProxy} from '../../Hubs/PlayTableHub'
@@ -41,7 +37,6 @@ class PlayTable extends Component {
             isLogout: true
         });
         connection.stop();
-        console.log('stop');
     }
     
     onCreateDibHandler = value =>{
@@ -74,11 +69,11 @@ class PlayTable extends Component {
                     value -= 1;
                 }
             }
-            this.props.userDibsBet(dibs);
-            this.props.fetchMakeBet(bet, cash, true);
+            this.props.userBet(bet, cash, dibs);
             
             if(localStorage.getItem('enemyId') !== '-1'){
-                playHubProxy.invoke('userBet', cash, bet, dibs);
+                if(connection.state === 1)
+                    playHubProxy.invoke('userBet', cash, bet, dibs);
             }
         }
     }
@@ -87,8 +82,6 @@ class PlayTable extends Component {
         userId = parseInt(localStorage.getItem('userId'));
         enemyId = parseInt(localStorage.getItem('enemyId'));
 
-        console.log('user = ' + userId + ' enemy = ' + enemyId);
-        console.log(localStorage.getItem('userId'));
         if(localStorage.getItem('userId') == null){
             this.setState({
                 isLogout: true
@@ -98,20 +91,25 @@ class PlayTable extends Component {
                 isLogout: false
             });
         }
-
-        this.props.getDataUser(userId);
     }
 
     componentWillUnmount(){
     }
 
     onSend = (value) =>{
-        playHubProxy.invoke('gameChat', userId, value);
+        if(connection.state === 1)
+            playHubProxy.invoke('gameChat', userId, value);
     }
 
     playOffer = (isBet = true) =>{
-        this.props.setActivePlayer(enemyId, isBet);
-        playHubProxy.invoke('playOffer', userId, isBet);
+        if(connection.state === 1){
+            let betCount = this.props.betCount;
+            if(this.props.bet > 0 && isBet){
+                betCount--;
+            }
+            this.props.setActivePlayer(enemyId, isBet, betCount);
+            playHubProxy.invoke('playOffer', userId, isBet);
+        }
     }
 
     onFold = () =>{
@@ -119,10 +117,12 @@ class PlayTable extends Component {
     }
 
     onCheck = () =>{
-        var difference = this.props.enemyBet - this.props.bet;
-        this.onCreateDibHandler(difference);
-        this.playOffer(false);
-        this.props.onPlayWithUserHandler();
+        if(connection.state === 1){
+            var difference = this.props.enemyBet - this.props.bet;
+            this.onCreateDibHandler(difference);
+            this.playOffer(false);
+            this.props.onPlayHandler();
+        }
     }
 
     onRaise = () =>{
@@ -132,8 +132,8 @@ class PlayTable extends Component {
     onMore = () =>{
         if(enemyId === -1){
             this.props.onMoreHandler();
-        } else {
-            this.props.onMoreWithUserHandler();
+        } else if(connection.state === 1){
+            this.props.onMoreHandler();
             playHubProxy.invoke('moreCards');
         }
     }
@@ -141,8 +141,8 @@ class PlayTable extends Component {
     onEnough = () =>{
         if(enemyId === -1){
             this.props.onEnoughHandler();
-        } else {
-            this.props.onEnoughWithUserHandler();
+        } else if(connection.state === 1){
+            this.props.onEnoughHandler();
             playHubProxy.invoke('enoughCards', this.props.playerHand, this.props.playerHandSum);
             this.playOffer(false);
         }
@@ -150,7 +150,8 @@ class PlayTable extends Component {
 
     endGame = () =>{
         if(enemyId !== -1){
-            playHubProxy.invoke('stopGame', userId);
+            if(connection.state === 1)
+                playHubProxy.invoke('stopGame', userId);
         }
     }
 
@@ -161,8 +162,8 @@ class PlayTable extends Component {
         let enableBet = this.props.id === this.props.activePlayerId;
         let difference = this.props.enemyBet - this.props.bet;
         return(
-            <div className={classes.PlayTable}>
-                <div className={classes.Container}>
+            <div className="PlayTable">
+                <div className="Container">
                     <PlayConnection/>
                     <Rate
                         bet={this.props.bet}
@@ -211,7 +212,7 @@ class PlayTable extends Component {
                         onCheck={this.onCheck}
                         onRaise={this.onRaise}
                         disabledFold={!enableBet}
-                        disabledCheck={!(difference < this.props.cash && difference >= 0 && enableBet)}
+                        disabledCheck={!(difference <= this.props.cash && difference >= 0 && enableBet)}
                         disabledRaise={!(this.props.bet > this.props.enemyBet && enableBet)}
                         onPlay={this.props.onPlayHandler}
                         onEnough={this.onEnough}
@@ -224,7 +225,7 @@ class PlayTable extends Component {
                         enableBet={enableBet}
                     />
 
-                    <div className={classes.Button}>
+                    <div className="PlayTableButton">
                         <NavLink to="/profile">
                             <Button 
                                 type="success" 
@@ -269,16 +270,11 @@ function mapStateToProps(state){
 
 function mapDispatchToProps(dispatch){
     return{
-        fetchMakeBet: (bet, cash, isPlay) => dispatch(fetchMakeBet(bet, cash, isPlay)),
-        userDibsBet: (bet) => dispatch(userDibsBet(bet)),
-        getDataUser: userId => dispatch(getDataUser(userId)),
-        setActivePlayer: (id, isBet) => dispatch(setActivePlayer(id, isBet)),
+        userBet: (bet, cash, dibsBet) => dispatch(userBet(bet, cash, dibsBet)),
+        setActivePlayer: (id, isBet, betCount) => dispatch(setActivePlayer(id, isBet, betCount)),
         onPlayHandler: () => dispatch(onPlayHandler()),
         onEnoughHandler: () => dispatch(onEnoughHandler()),
-        onMoreHandler: () => dispatch(onMoreHandler()),
-        onPlayWithUserHandler: () => dispatch(onPlayWithUserHandler()),
-        onMoreWithUserHandler: () => dispatch(onMoreWithUserHandler()),
-        onEnoughWithUserHandler: () => dispatch(onEnoughWithUserHandler())
+        onMoreHandler: () => dispatch(onMoreHandler())
     }
 }
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import classes from './EnemyHand.css'
+import './EnemyHand.css'
 import CardFace from '../CardFace/CardFace';
 
 import Card from '../Card/Card'
@@ -10,7 +10,7 @@ const EnemyHand = props =>{
         cards.push(<CardFace key={i}/>);   
     }
     return(
-        <div className={classes.EnemyHand}>
+        <div className="EnemyHand">
             {
                 props.enemyHandSum === 0 ? cards : 
                 <div>

@@ -1,10 +1,10 @@
 import React from 'react'
-import classes from './Dibs.css'
+import './Dibs.css'
 import Dib from './Dib/Dib'
 
 const Dibs = props =>(
    
-    <ul className={classes.Dibs}>
+    <ul className="Dibs">
         {
             props.dibs.map((dib, index)=>{
                 return(

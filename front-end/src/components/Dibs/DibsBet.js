@@ -1,5 +1,5 @@
 import React from 'react'
-import classes from './DibsBet.css'
+import './DibsBet.css'
 
 const DibsBet = props =>(   
     <div>
@@ -8,37 +8,37 @@ const DibsBet = props =>(
                 switch(bet){
                     case 200: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_200}>
+                            <div key={index} className="dib user_dib_200">
                                 {bet}
                             </div>
                         )
                     case 100: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_100}>
+                            <div key={index} className="dib user_dib_100">
                                 {bet}
                             </div>
                         )
                     case 50: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_50}>
+                            <div key={index} className="dib user_dib_50">
                                 {bet}
                             </div>
                         )
                     case 25: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_25}>
+                            <div key={index} className="dib user_dib_25">
                                 {bet}
                             </div>
                         )
                     case 5: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_5}>
+                            <div key={index} className="dib user_dib_5">
                                 {bet}
                             </div>
                         )
                     default: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.user_dib_1}>
+                            <div key={index} className="dib user_dib_1">
                                 {bet}
                             </div>
                         )
@@ -50,37 +50,37 @@ const DibsBet = props =>(
                 switch(bet){
                     case 200: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_200}>
+                            <div key={index} className="dib enemy_dib_200">
                                 {bet}
                             </div>
                         )
                     case 100: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_100}>
+                            <div key={index} className="dib enemy_dib_100">
                                 {bet}
                             </div>
                         )
                     case 50: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_50}>
+                            <div key={index} className="dib enemy_dib_50">
                                 {bet}
                             </div>
                         )
                     case 25: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_25}>
+                            <div key={index} className="dib enemy_dib_25">
                                 {bet}
                             </div>
                         )
                     case 5: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_5}>
+                            <div key={index} className="dib enemy_dib_5">
                                 {bet}
                             </div>
                         )
                     default: 
                         return(
-                            <div key={index} className={classes.dib + ' ' + classes.enemy_dib_1}>
+                            <div key={index} className="dib enemy_dib_1">
                                 {bet}
                             </div>
                         )

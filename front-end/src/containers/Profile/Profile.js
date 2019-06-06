@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
-import classes from './Profile.css'
+import './Profile.css'
 import {Redirect} from 'react-router-dom'
 import Button from '../../components/UI/Button/Button'
 
@@ -22,10 +22,9 @@ class Profile extends Component{
             isLogout: true
         });
         connection.stop();
-        console.log('stop');
     }
 
-    componentDidMount(){        
+    componentDidMount(){
         localStorage.removeItem('user');
         if(localStorage.getItem('userId') === null){
             this.isLogout();
@@ -37,13 +36,15 @@ class Profile extends Component{
     }
 
     acceptGame = (e) => {
-        localStorage.setItem("enemyId", e.target.id);
-        if(this.state.ready){
-            this.readyState();
+        if(connection.state === 1){
+            localStorage.setItem("enemyId", e.target.id);
+            if(this.state.ready){
+                this.readyState();
+            }
+            this.props.setActivePlayer(parseInt(localStorage.getItem('userId')), true, 3);
+            playHubProxy.invoke("acceptGame", localStorage.getItem('userId'), localStorage.getItem("enemyId"));
+            this.props.history.push('/play');
         }
-        this.props.setActivePlayer(parseInt(localStorage.getItem('userId')));
-        playHubProxy.invoke("acceptGame", localStorage.getItem('userId'), localStorage.getItem("enemyId"));
-        this.props.history.push('/play');
     }
 
     playWithBot = () => {
@@ -54,10 +55,12 @@ class Profile extends Component{
     }
 
     readyState = () => {
-        playHubProxy.invoke("ready", localStorage.getItem('userId'), !this.state.ready);
-        this.setState({
-            ready: !this.state.ready
-        });
+        if(connection.state === 1){
+            playHubProxy.invoke("ready", localStorage.getItem('userId'), !this.state.ready);
+            this.setState({
+                ready: !this.state.ready
+            });
+        }
     }
 
     render(){
@@ -65,7 +68,7 @@ class Profile extends Component{
             return (<Redirect to='/' />)
         }else{
             return(
-                <div className={classes.Profile}>
+                <div className="Profile">
                     <ProfileConnection/>
                     <div>
                         <h1>{this.props.user.name}</h1>
@@ -75,7 +78,7 @@ class Profile extends Component{
                             <b>Счет: </b><em>{this.props.user.cash}</em><br />
                         </p>
                         <hr />
-                        <div className={classes.Buttons}>
+                        <div className="Buttons">
                             <Button
                                 type="success" 
                                 onClick={this.playWithBot} 
@@ -91,7 +94,7 @@ class Profile extends Component{
                         </div>
                         <hr />
                         <Users
-                            Count={this.props.count}
+                            Count={this.props.users.length}
                             onClick={this.acceptGame}
                             Users={this.props.users}
                         />
@@ -104,15 +107,15 @@ class Profile extends Component{
 }
 
 function mapStateToProps(state) {
-    const { count, users, user } = state.playTable;
+    const { users, user } = state.playTable;
     return {
-        count, users, user
+        users, user
     };
 }
 
 function mapDispatchToProps(dispatch){
     return{
-        setActivePlayer: (id) => dispatch(setActivePlayer(id))
+        setActivePlayer: (id, isBet, betCount) => dispatch(setActivePlayer(id, isBet, betCount))
     }
 }
 

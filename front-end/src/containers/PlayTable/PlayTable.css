@@ -8,8 +8,6 @@
     justify-content: center;
 	padding-top: 20px;
     flex-grow: 1;
-    min-width: 700px;
-    min-height: 450px;
 }
 
 .Container{
@@ -18,7 +16,7 @@
     position: relative;
 }
 
-.Button{
+.PlayTableButton{
     position: absolute;
     right: 20px;
     top: 20px;

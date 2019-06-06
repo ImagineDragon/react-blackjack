@@ -1,4 +1,4 @@
-.Rate{
+.EnemyRate{
     position: absolute;
     right: 20px;
     top: 100px;
@@ -11,7 +11,7 @@
 	font-weight: 700;
 	color: black;
 }
-.Rate>p{
+.EnemyRate>p{
     margin: 0;
     text-align: center;
 }

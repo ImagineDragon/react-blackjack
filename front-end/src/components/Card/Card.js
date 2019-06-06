@@ -1,10 +1,10 @@
 import React from 'react'
-import classes from './Card.css'
+import './Card.css'
 
 const Card = props => {
     const img = `../../images/cards/${props.card.suit}/${props.card.name}.jpg`;
     return(
-        <img src={require(`../../images/cards/${props.card.suit}/${props.card.name}.jpg`)} alt="Card" className={classes.Card} />
+        <img src={require(`../../images/cards/${props.card.suit}/${props.card.name}.jpg`)} alt="Card" className="Card" />
     )
 }
 

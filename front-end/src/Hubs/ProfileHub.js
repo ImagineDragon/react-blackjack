@@ -13,7 +13,7 @@ import {getUserProfile,
         onUserReady,
         setActivePlayer} from '../store/actions/playTable'
 
-export const connection = hubConnection('http://localhost:3001'), playHubProxy = connection.createHubProxy('playHub');
+export const connection = hubConnection('http://localhost:3001/'), playHubProxy = connection.createHubProxy('playHub'); //http://blackjackwebapitest.us-west-2.elasticbeanstalk.com http://localhost:3001
 
 class ProfileConnection extends Component{
     componentDidMount(){
@@ -22,12 +22,10 @@ class ProfileConnection extends Component{
         this.props.getUserProfile(userId);
 
         playHubProxy.on('onConnected', function(profiles){
-            console.log('Connected');
             this.props.onConnected(profiles);
         }.bind(this));
 
         playHubProxy.on('onNewUserConnected', function(newUser){
-            console.log('New user')
             var users = this.props.users;
             var index = users.indexOf(newUser);
             if(index === -1){
@@ -37,7 +35,6 @@ class ProfileConnection extends Component{
 
         playHubProxy.on('onUserDisconnected', function(profile){
             if(connection != null){
-                console.log('User disconnected')
                 this.props.onUserDisconnected(profile);
             }
         }.bind(this));
@@ -48,14 +45,13 @@ class ProfileConnection extends Component{
 
         playHubProxy.on('onGameAccept', function(profile){
             localStorage.setItem('enemyId', profile.id);
-            this.props.setActivePlayer(profile.id);
+            this.props.setActivePlayer(profile.id, true, 3);
             playHubProxy.invoke("ready", localStorage.getItem('userId'), false);
             history.push('/play');
         }.bind(this));
         
-        connection.start().done(function(){
+        connection.start({ transport: 'serverSentEvents' }).done(function(){
             playHubProxy.invoke('connect', userId);
-            console.log('userId ', userId);
         });
     }
 
@@ -83,7 +79,7 @@ function mapDispatchToProps(dispatch){
     return{
         getUserProfile: (userId) => dispatch(getUserProfile(userId)),
         onConnected: (profiles) => dispatch(onConnected(profiles)),
-        setActivePlayer: (id) => dispatch(setActivePlayer(id)),
+        setActivePlayer: (id, isBet, betCount) => dispatch(setActivePlayer(id, isBet, betCount)),
         onNewUserConnected: (newUser) =>dispatch(onNewUserConnected(newUser)),
         onUserDisconnected: (profile) =>dispatch(onUserDisconnected(profile)),
         onUserReady: (profile) =>dispatch(onUserReady(profile))
