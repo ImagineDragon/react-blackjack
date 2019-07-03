@@ -32,6 +32,7 @@ class PlayTable extends Component {
     }
 
     isLogout = () => {
+        localStorage.removeItem('token');
         localStorage.removeItem('userId');
         this.setState({
             isLogout: true
@@ -82,7 +83,7 @@ class PlayTable extends Component {
         userId = parseInt(localStorage.getItem('userId'));
         enemyId = parseInt(localStorage.getItem('enemyId'));
 
-        if(localStorage.getItem('userId') == null){
+        if(localStorage.getItem('token') == null){
             this.setState({
                 isLogout: true
             });

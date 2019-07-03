@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
+using System.Threading;
+using System.Web;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using blackjack_WebAPI.Models;
+using blackjack_WebAPI.Helpers;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
+using System.Net.Http;
+using System.Net;
+using System.Security.Claims;
 
 namespace blackjack_WebAPI.Controllers
 {
@@ -18,45 +20,38 @@ namespace blackjack_WebAPI.Controllers
     {
         private UserContext db = new UserContext();
 
-        static string GetHashString(string rawData)
-        {
-            // Create a SHA256   
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // ComputeHash - returns byte array  
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-
-                // Convert byte array to a string   
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
-            }
-        }
-
         public IEnumerable<User> GetUsers()
         {
             return db.Users;
         }
 
         [HttpPost]
-        public string Post([FromBody]Auth auth)
+        [AllowAnonymous]
+        public object Post(Auth auth)
         {
-            string password = GetHashString(auth.Password);
-            User user = db.Users.FirstOrDefault(e => e.Email == auth.Email && e.Password == password);
-            if (user != null)
+            var pairs = new List<KeyValuePair<string, string>>
+                    {
+                        new KeyValuePair<string, string>( "grant_type", "password" ),
+                        new KeyValuePair<string, string>( "username", auth.Email ),
+                        new KeyValuePair<string, string> ( "Password", auth.Password )
+                    };
+            var content = new FormUrlEncodedContent(pairs);
+            ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
+            using (var client = new HttpClient())
             {
-                return user.Id.ToString();
+                var response = client.PostAsync("http://blackjackwebapitest.us-west-2.elasticbeanstalk.com/Token", content).Result;
+                var result = response.Content.ReadAsStringAsync().Result;
+                string password = HashHelper.GetHashString(auth.Password);
+                User user = db.Users.FirstOrDefault(u => u.Email == auth.Email && u.Password == password);
+                int id = user == null ? -1 : user.Id;
+                return new { token = response.Content.ReadAsStringAsync().Result , id};
             }
-            return null;
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public Registration Registration(Registration reg)
         {
-
             User user = db.Users.FirstOrDefault(u => u.Email == reg.Email);
 
             if (user != null)
@@ -64,7 +59,7 @@ namespace blackjack_WebAPI.Controllers
                 return null;
             }
 
-            User addUser = new User { Name = reg.Name, Email = reg.Email, Password = GetHashString(reg.Password), Cash = 1500 };
+            User addUser = new User { Name = reg.Name, Email = reg.Email, Password = HashHelper.GetHashString(reg.Password), Cash = 1500 };
 
             db.Users.Add(addUser);
             db.SaveChanges();
@@ -72,10 +67,16 @@ namespace blackjack_WebAPI.Controllers
             return reg;
         }
 
-        [HttpPost]
-        public ProfilePost Profile(ProfileGet id)
+        [HttpGet]
+        [Authorize]
+        public Profile Profile()
         {
-            User user = db.Users.FirstOrDefault(u => u.Id == id.userId);
+            var identity = (ClaimsPrincipal)Thread.CurrentPrincipal;
+            
+            int id = Int32.Parse(identity.Claims.Where(c => c.Type == "id")
+                               .Select(c => c.Value).SingleOrDefault());
+
+            User user = db.Users.FirstOrDefault(u => u.Id == id);
 
             if (user == null)
             {
@@ -90,18 +91,24 @@ namespace blackjack_WebAPI.Controllers
             //var message = MessageResource.Create(
             //    body: "Ку",
             //    from: new Twilio.Types.PhoneNumber("+12282000870"),
-            //    to: new Twilio.Types.PhoneNumber("+380633032652")
+            //    to: new Twilio.Types.PhoneNumber("+380")
             //    );
 
-            ProfilePost profile = new ProfilePost { id = id.userId, name = user.Name, email = user.Email, cash = user.Cash };
+            Profile profile = new Profile { id = id, name = user.Name, email = user.Email, cash = user.Cash };
 
             return profile;
         }
 
         [HttpPut]
+        [Authorize]
         public User PlayUser(UpdateData update)
         {
-            User user = db.Users.FirstOrDefault(u => u.Id.ToString() == update.userUpdate);
+            var identity = (ClaimsPrincipal)Thread.CurrentPrincipal;
+
+            int id = Int32.Parse(identity.Claims.Where(c => c.Type == "id")
+                               .Select(c => c.Value).SingleOrDefault());
+
+            User user = db.Users.FirstOrDefault(u => u.Id == id);
 
             user.Cash = update.cash;
             db.SaveChanges();

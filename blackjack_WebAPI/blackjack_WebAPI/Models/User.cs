@@ -30,13 +30,8 @@ namespace blackjack_WebAPI.Models
         public string Email { get; set; }
         public string Password { get; set; }
     }
-
-    public class ProfileGet
-    {
-        public int userId { get; set; }
-    }
-
-    public class ProfilePost
+    
+    public class Profile
     {
         public int id { get; set; }
         public string name { get; set; }
@@ -53,7 +48,6 @@ namespace blackjack_WebAPI.Models
 
     public class UpdateData
     {
-        public string userUpdate { get; set; }
         public int cash { get; set; }
     }
 

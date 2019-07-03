@@ -17,6 +17,7 @@ class Profile extends Component{
     }
 
     isLogout = () => {
+        localStorage.removeItem('token');
         localStorage.removeItem('userId');
         this.setState({
             isLogout: true
@@ -26,7 +27,7 @@ class Profile extends Component{
 
     componentDidMount(){
         localStorage.removeItem('user');
-        if(localStorage.getItem('userId') === null){
+        if(localStorage.getItem('token') === null){
             this.isLogout();
         }
         localStorage.setItem('enemyId', -1);

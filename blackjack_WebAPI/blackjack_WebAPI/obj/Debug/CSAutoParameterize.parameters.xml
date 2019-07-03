@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <parameter name="UserContext-Web.config Connection String" description="UserContext Connection String used in web.config by the application to access the database." defaultValue="Data Source=users.csuodcshhtdz.us-west-2.rds.amazonaws.com;Initial Catalog=Users;User Id=sa;Password=testtest" tags="SqlConnectionString">
+    <parameterEntry kind="XmlFile" scope="D:\\C\#\\blackjack_WebAPI\ -\ new\\blackjack_WebAPI\\obj\\Debug\\Package\\PackageTmp\\Web\.config$" match="/configuration/connectionStrings/add[@name='UserContext']/@connectionString" />
+  </parameter>
+</parameters>

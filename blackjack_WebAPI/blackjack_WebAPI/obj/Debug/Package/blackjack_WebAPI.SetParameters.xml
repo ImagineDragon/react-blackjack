@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<parameters>
+  <setParameter name="IIS Web Application Name" value="Default Web Site/" />
+  <setParameter name="UserContext-Web.config Connection String" value="Data Source=users.csuodcshhtdz.us-west-2.rds.amazonaws.com;Initial Catalog=Users;User Id=sa;Password=testtest" />
+</parameters>

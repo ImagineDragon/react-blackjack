@@ -19,7 +19,7 @@ class ProfileConnection extends Component{
     componentDidMount(){
         const userId = parseInt(localStorage.getItem('userId'));
         
-        this.props.getUserProfile(userId);
+        this.props.getUserProfile();
 
         playHubProxy.on('onConnected', function(profiles){
             this.props.onConnected(profiles);
@@ -77,7 +77,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch){
     return{
-        getUserProfile: (userId) => dispatch(getUserProfile(userId)),
+        getUserProfile: () => dispatch(getUserProfile()),
         onConnected: (profiles) => dispatch(onConnected(profiles)),
         setActivePlayer: (id, isBet, betCount) => dispatch(setActivePlayer(id, isBet, betCount)),
         onNewUserConnected: (newUser) =>dispatch(onNewUserConnected(newUser)),

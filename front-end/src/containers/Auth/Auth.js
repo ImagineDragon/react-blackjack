@@ -40,8 +40,8 @@ class Auth extends Component{
 	}
 
 	componentDidMount(){
-		const userId = localStorage.getItem('userId');
-		if(userId != null){
+		const token = localStorage.getItem('token');
+		if(token != null){
 			this.setState({
 				isLogin: true
 			});
@@ -54,9 +54,12 @@ class Auth extends Component{
 			password: this.state.formControls.password.value
 		};
 		
-		const respons = await axios.post('http://localhost:3001/',dataAuth);
-		if(respons.data){
-			localStorage.setItem('userId', respons.data);
+		const respons = await axios.post('http://localhost:3001/', dataAuth);
+		let token = JSON.parse(respons.data.token);
+		if(token.error === undefined){
+			console.log(token);
+			localStorage.setItem('token', token.access_token);
+			localStorage.setItem('userId', respons.data.id);
 			this.setState({
 				isLogin: true
 			});

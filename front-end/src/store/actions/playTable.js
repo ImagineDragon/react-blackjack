@@ -19,15 +19,15 @@ import {HAND_SUCCESS,
         GAME_RESULT,
         GAME_END} from './actionType'
 import axios from 'axios'
+import {history} from '../history'
 
-export function getUserProfile(userId){
+export function getUserProfile(){
     return async dispatch =>{
-        const data = {
-            userId: userId  
-        }
         let setStateUser;
-        const respons = await axios.post('http://localhost:3001/profile', data);
-        if(respons.data){
+        
+        let token = localStorage.getItem('token');
+        await axios.get('http://localhost:3001/profile', {headers: {"Authorization": "Bearer " + token}})
+        .then(respons => {
             setStateUser = {
                 id: respons.data.id,
                 cash: respons.data.cash,
@@ -35,11 +35,15 @@ export function getUserProfile(userId){
                 email: respons.data.email
             }
             localStorage.setItem('userId', respons.data.id);
-        } else {
-            localStorage.removeItem('userId');
-        }
 
-        dispatch(userProfile(setStateUser));
+            dispatch(userProfile(setStateUser));
+        })
+        .catch(error => {
+            console.log('error');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('token');
+            // history.push('/');
+        });
     }
 }
 
@@ -366,11 +370,9 @@ export function onDeletDib() {
 
 
 async function updateData(cash){
-    const userUpdate = localStorage.getItem('userId');
-    const dataUpdate ={
-        userUpdate, cash
-    }
-    await axios.put('http://localhost:3001/playUser', dataUpdate);
+    const dataUpdate = { cash };
+    let token = localStorage.getItem('token');
+    await axios.put('http://localhost:3001/playUser', dataUpdate, {headers: {"Authorization": "Bearer " + token}});
 }
 
 
